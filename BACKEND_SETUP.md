@@ -21,7 +21,7 @@ Kindwise documents the Crop.health identification API and its image-based crop/d
 
 ## 2. Create four GitHub Actions secrets
 
-Open [FASALSATHI → Settings → Secrets and variables → Actions](https://github.com/Ambkeshwargupta/FASALSATHI/settings/secrets/actions), click **New repository secret**, and add:
+Open [FASALSATHI → Settings → Secrets and variables → Actions](https://github.com/Ambkeshwargupta/FASALSATHI/settings/secrets/actions), click **New repository secret**, and add exactly these three secrets:
 
 | Secret name | Value / where to get it |
 | --- | --- |
@@ -36,7 +36,7 @@ Do not paste access tokens, database passwords, or the Crop.health key into chat
 
 ## 3. Deploy database and functions
 
-After adding all four secrets:
+After adding all three secrets:
 
 1. Open the repository [Actions tab](https://github.com/Ambkeshwargupta/FASALSATHI/actions).
 2. Select **Deploy FASALSATHI database and Edge Functions**.
