@@ -6,7 +6,7 @@ A tomato-focused crop assistant with photo assessments, location-based disease w
 
 ## Features
 
-- **Tomato photo checks:** upload or capture a photo to receive a likely issue, match confidence, and available symptoms, severity information, treatment suggestions and alternative matches.
+- **Tomato photo scanner:** the upload, preview, validation and result UI are included. Live Crop.health analysis requires a dedicated Supabase project and server-side Kindwise key; follow [BACKEND_SETUP.md](BACKEND_SETUP.md) before using live scans.
 - **Tomato-only validation:** confident non-tomato predictions are rejected. Uncertain crop identification can fall back to a registered Tomato field when the issue result is usable. Rejected scans offer clearer-photo guidance and cannot be saved or submitted through the app's reporting flow.
 - **Weather-based disease risk:** Open-Meteo hourly forecasts feed the TOMCAST calculation for early blight, Septoria leaf spot and anthracnose. Farmers see Low, Moderate, High or Very high rather than raw scores. Today and the next five days are shown separately; stale or incomplete data is not presented as low risk.
 - **Field records:** automatic location permission request, map pin adjustment, crop details and saved photo assessments. Language selection opens the homepage directly, with no login screen.
@@ -42,9 +42,9 @@ Open `http://localhost:8080`. Internet access is needed for weather, map tiles, 
 
 ### Service configuration
 
-`SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` are configured in `index.html`. The deployed function is called at `${SUPABASE_URL}/functions/v1/rapid-endpoint`.
+`supabaseUrl` and `supabasePublishableKey` are configured in `app-config.js`. The browser calls `${supabaseUrl}/functions/v1/rapid-endpoint`. This repository includes the Edge Function source at `supabase/functions/rapid-endpoint/index.ts` and a manual GitHub Actions deploy workflow. See [BACKEND_SETUP.md](BACKEND_SETUP.md).
 
-For a separate deployment, provide your own Supabase project, deployed function and `disease_reports` table with appropriate access policies. The frontend uses `field_id`, `disease`, `latitude`, `longitude`, `confidence` and `source`, and reads `created_at` when present. The deployed Edge Function source and database migrations are **not included** in this repository; cloning the frontend does not provision them.
+This repository is a separate deployment and must use its own active Supabase project. The retired project reference from the earlier prototype is deliberately not reused. The scanner's Edge Function source is included; the Kindwise key must be stored as a Supabase Edge Function secret. The `disease_reports` table and database migrations are still separate requirements for nearby alerts. The frontend uses `field_id`, `disease`, `latitude`, `longitude`, `confidence` and `source`, and reads `created_at` when present.
 
 Tomato validation settings are in `CropScan.TOMATO_VALIDATION` in `crop-scan.js`:
 
