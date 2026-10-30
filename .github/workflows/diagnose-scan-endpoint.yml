@@ -1,0 +1,45 @@
+name: Diagnose crop photo service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-scan-endpoint.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Supabase function preflight for both deployments
+        shell: bash
+        run: |
+          set -euo pipefail
+          ENDPOINT="https://cyopgofpflgnhzgmvynb.supabase.co/functions/v1/rapid-endpoint"
+          for ORIGIN in "https://newcoder355.github.io" "https://ambkeshwargupta.github.io"; do
+            echo "=== CORS preflight: $ORIGIN ==="
+            curl --silent --show-error --max-time 25 \
+              --dump-header /tmp/headers --output /tmp/body \
+              --write-out "HTTP_STATUS=%{http_code}\n" \
+              --request OPTIONS "$ENDPOINT" \
+              --header "Origin: $ORIGIN" \
+              --header "Access-Control-Request-Method: POST" \
+              --header "Access-Control-Request-Headers: apikey,content-type"
+            grep -iE "^(HTTP/|access-control-allow-origin:|access-control-allow-methods:|access-control-allow-headers:|vary:)" /tmp/headers || true
+            echo
+          done
+      - name: Check endpoint reachability without submitting a crop photo
+        shell: bash
+        run: |
+          set -euo pipefail
+          ENDPOINT="https://cyopgofpflgnhzgmvynb.supabase.co/functions/v1/rapid-endpoint"
+          echo "=== GET reachability (no API key and no image payload) ==="
+          curl --silent --show-error --max-time 25 \
+            --dump-header /tmp/headers --output /tmp/body \
+            --write-out "HTTP_STATUS=%{http_code}\n" \
+            "$ENDPOINT" || true
+          grep -iE "^(HTTP/|access-control-allow-origin:|content-type:)" /tmp/headers || true
+          head -c 500 /tmp/body || true
