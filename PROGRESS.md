@@ -61,3 +61,14 @@ Updated README to reflect current functionality, service configuration, local se
 - Added `.github/workflows/diagnose-scan-endpoint.yml` to investigate DNS and CORS for the new and original GitHub Pages origins. A follow-up run adds DNS-over-HTTPS lookup before repeating the preflight.
 - No files or services in the original `newcoder355/fasal-sathi-` repository were changed during this investigation.
 - To complete an isolated fix in this repository, it needs an active Supabase project URL and a deployed browser-accessible Crop.health Edge Function (with CORS for `https://ambkeshwargupta.github.io`). The Kindwise API key must remain in server-side Supabase secrets, not in browser code.
+
+
+## Crop photo service fix — FASALSATHI-only checkpoint
+
+- Confirmed the old frontend's Supabase hostname `cyopgofpflgnhzgmvynb.supabase.co` resolves to DNS status 3 (NXDOMAIN) in the FASALSATHI repository's GitHub Actions diagnostic. Both the old and cloned prototype had inherited that same dead backend reference; the photo request fails before reaching any model.
+- Removed that retired URL and key from this repository's `index.html`. The new `app-config.js` holds only the public project URL and publishable key. Until a dedicated project is configured, the scanner now reports that setup is required instead of showing a misleading internet/network error.
+- Added `supabase/functions/rapid-endpoint/index.ts`, a server-side Crop.health proxy. The Kindwise API key remains in Supabase Edge Function Secrets; the function handles CORS, validates the request, forwards the image to Crop.health and returns its native response for the existing parser.
+- Added `supabase/config.toml`, `BACKEND_SETUP.md`, and a manual GitHub Actions workflow to set backend secrets and deploy the function into the new Supabase project.
+- No changes were made to `newcoder355/fasal-sathi-`.
+- Live scanning is not yet active: the new repo still needs a newly created Supabase project, its URL and publishable key in `app-config.js`, and the GitHub Actions secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_PUBLISHABLE_KEY`, and `CROP_HEALTH_API_KEY`. The app cannot complete this external provisioning without those project credentials.
+- Test scanning only with a clear tomato-leaf photo. The screenshot image is a Vectornest promotional poster, so the real scanner should reject it as a non-crop image once the API is connected.
