@@ -919,8 +919,25 @@ const supabaseClient = SUPABASE_CONFIGURED && window.supabase?.createClient
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
   : null;
 
+async function callDiseaseReports(action, payload = {}) {
+  if (!SUPABASE_CONFIGURED || !SCAN_ENDPOINT_URL) throw new Error('reportsBackendNotConfigured');
+  const response = await fetch(SUPABASE_URL + '/functions/v1/disease-reports', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_PUBLISHABLE_KEY
+    },
+    body: JSON.stringify({ action, ...payload })
+  });
+  let data;
+  try { data = await response.json(); }
+  catch { throw new Error('reportsInvalidResponse'); }
+  if (!response.ok || data?.error) throw new Error(data?.error || 'reportsServiceError');
+  return data;
+}
+
 async function saveDiseaseReportToCloud(field, scan) {
-  if (!supabaseClient || !field || !scan || !CropScan.validateTomato(scan.assessment,field.crop).accepted) return { skipped: true };
+  if (!SUPABASE_CONFIGURED || !field || !scan || !CropScan.validateTomato(scan.assessment,field.crop).accepted) return { skipped: true };
   const rawResult = typeof scan.result === "string" ? scan.result : scan.result?.disease;
   const disease = String(rawResult || "").trim();
   if (!disease || disease.toLowerCase() === "unassessed") return { skipped: true };
@@ -941,8 +958,7 @@ async function saveDiseaseReportToCloud(field, scan) {
     source: "image_scan"
   };
 
-  const { error } = await supabaseClient.from("disease_reports").insert([payload]);
-  if (error) throw error;
+  await callDiseaseReports('insert', { report: payload });
   return { saved: true };
 }
 
@@ -1308,16 +1324,16 @@ async function recentDiseaseReports(){
  if(outbreakCache.reports&&Date.now()-outbreakCache.at<60000)return outbreakCache.reports;
  if(outbreakCache.promise)return outbreakCache.promise;
  outbreakCache.promise=(async()=>{
-   if(!supabaseClient)return [];
-   const {data,error}=await supabaseClient.from('disease_reports').select('*');
-   if(error)throw error;
-   const cutoff=Date.now()-5*24*60*60*1000;
-   const rows=(data||[]).filter(r=>{
-     if(!r||!r.field_id||!r.disease||!Number.isFinite(Number(r.latitude))||!Number.isFinite(Number(r.longitude)))return false;
-     if(!r.created_at)return true;
-     const stamp=new Date(r.created_at).getTime();
-     return !Number.isFinite(stamp)||stamp>=cutoff;
-   });
+   if(!SUPABASE_CONFIGURED)return [];
+   const fields=(account()?.fields||[])
+     .filter(f=>Number.isFinite(Number(f.lat))&&Number.isFinite(Number(f.lon)))
+     .slice(0,10)
+     .map(f=>({latitude:Number(f.lat),longitude:Number(f.lon)}));
+   if(!fields.length)return [];
+   const response=await callDiseaseReports('nearby',{fields});
+   const rows=(Array.isArray(response.reports)?response.reports:[]).filter(r=>
+     r&&r.field_id&&r.disease&&Number.isFinite(Number(r.latitude))&&Number.isFinite(Number(r.longitude))
+   );
    outbreakCache={at:Date.now(),promise:null,reports:rows};
    return rows;
  })().catch(error=>{console.warn('Supabase outbreak read failed:',error);outbreakCache.promise=null;throw error;});
