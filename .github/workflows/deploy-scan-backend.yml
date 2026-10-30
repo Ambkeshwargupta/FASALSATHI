@@ -14,12 +14,11 @@ jobs:
         shell: bash
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           CROP_HEALTH_API_KEY: ${{ secrets.CROP_HEALTH_API_KEY }}
         run: |
           set -euo pipefail
-          for name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF SUPABASE_DB_PASSWORD CROP_HEALTH_API_KEY; do
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD CROP_HEALTH_API_KEY; do
             if [ -z "${!name}" ]; then
               echo "::error::Missing repository secret: $name"
               exit 1
@@ -47,9 +46,8 @@ jobs:
       - name: Link the dedicated Supabase project
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+        run: supabase link --project-ref "aaslgfnfdxhgoqwwpgnz" --password "$SUPABASE_DB_PASSWORD"
 
       - name: Apply database migrations
         env:
@@ -61,24 +59,24 @@ jobs:
         shell: bash
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          PROJECT_REF: ${{ vars.PROJECT_REF }}
           CROP_HEALTH_API_KEY: ${{ secrets.CROP_HEALTH_API_KEY }}
         run: |
           set -euo pipefail
           SECRETS_FILE="$RUNNER_TEMP/fasalsathi-edge-secrets.env"
           umask 077
           printf 'CROP_HEALTH_API_KEY=%s\n' "$CROP_HEALTH_API_KEY" > "$SECRETS_FILE"
-          supabase secrets set --env-file "$SECRETS_FILE" --project-ref "$SUPABASE_PROJECT_REF"
+          supabase secrets set --env-file "$SECRETS_FILE" --project-ref "aaslgfnfdxhgoqwwpgnz"
           rm -f "$SECRETS_FILE"
 
       - name: Deploy Crop.health scanner
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-        run: supabase functions deploy rapid-endpoint --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+          PROJECT_REF: ${{ vars.PROJECT_REF }}
+        run: supabase functions deploy rapid-endpoint --project-ref "aaslgfnfdxhgoqwwpgnz" --no-verify-jwt
 
       - name: Deploy private disease reports service
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-        run: supabase functions deploy disease-reports --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+          PROJECT_REF: ${{ vars.PROJECT_REF }}
+        run: supabase functions deploy disease-reports --project-ref "aaslgfnfdxhgoqwwpgnz" --no-verify-jwt
