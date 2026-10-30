@@ -88,8 +88,9 @@ async function dbRequest(path: string, init: RequestInit = {}) {
   const response = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
     ...init,
     headers: {
+      // Supabase's opaque sb_secret_* key must be sent on apikey only.
+      // It is not a JWT and must not be copied into Authorization: Bearer.
       "apikey": SERVICE_KEY,
-      "Authorization": "Bearer " + SERVICE_KEY,
       "Content-Type": "application/json",
       ...(init.headers ?? {}),
     },
