@@ -14,10 +14,20 @@ jobs:
   preflight:
     runs-on: ubuntu-latest
     steps:
-      - name: Check Supabase function preflight for both deployments
+      - name: Resolve the configured Supabase project hostname
         shell: bash
         run: |
           set -euo pipefail
+          HOST="cyopgofpflgnhzgmvynb.supabase.co"
+          echo "=== DNS-over-HTTPS lookup: $HOST ==="
+          curl --fail --silent --show-error --max-time 20 \
+            "https://dns.google/resolve?name=$HOST&type=A" | jq '{Status,Answer,Comment}'
+          echo "=== Runner resolver lookup ==="
+          getent ahosts "$HOST" || true
+      - name: Check Supabase function CORS preflight for both deployments
+        shell: bash
+        run: |
+          set -u
           ENDPOINT="https://cyopgofpflgnhzgmvynb.supabase.co/functions/v1/rapid-endpoint"
           for ORIGIN in "https://newcoder355.github.io" "https://ambkeshwargupta.github.io"; do
             echo "=== CORS preflight: $ORIGIN ==="
@@ -27,19 +37,7 @@ jobs:
               --request OPTIONS "$ENDPOINT" \
               --header "Origin: $ORIGIN" \
               --header "Access-Control-Request-Method: POST" \
-              --header "Access-Control-Request-Headers: apikey,content-type"
-            grep -iE "^(HTTP/|access-control-allow-origin:|access-control-allow-methods:|access-control-allow-headers:|vary:)" /tmp/headers || true
+              --header "Access-Control-Request-Headers: apikey,content-type" || true
+            grep -iE "^(HTTP/|access-control-allow-origin:|access-control-allow-methods:|access-control-allow-headers:|vary:)" /tmp/headers 2>/dev/null || true
             echo
           done
-      - name: Check endpoint reachability without submitting a crop photo
-        shell: bash
-        run: |
-          set -euo pipefail
-          ENDPOINT="https://cyopgofpflgnhzgmvynb.supabase.co/functions/v1/rapid-endpoint"
-          echo "=== GET reachability (no API key and no image payload) ==="
-          curl --silent --show-error --max-time 25 \
-            --dump-header /tmp/headers --output /tmp/body \
-            --write-out "HTTP_STATUS=%{http_code}\n" \
-            "$ENDPOINT" || true
-          grep -iE "^(HTTP/|access-control-allow-origin:|content-type:)" /tmp/headers || true
-          head -c 500 /tmp/body || true
