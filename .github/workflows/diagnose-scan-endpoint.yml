@@ -1,49 +1,51 @@
-name: Diagnose FASALSATHI photo endpoint
+name: Diagnose FASALSATHI scan connection
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-scan-endpoint.yml"
+      - "app-config.js"
+      - "supabase/functions/rapid-endpoint/index.ts"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  preflight:
+  diagnose:
     runs-on: ubuntu-latest
     steps:
-      - name: Check whether the new backend is configured
+      - name: Check Supabase project DNS
         shell: bash
-        env:
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
-          if [ -z "$SUPABASE_PROJECT_REF" ]; then
-            echo "FASALSATHI has no dedicated Supabase project configured yet."
-            echo "Create the project and add the SUPABASE_PROJECT_REF repository secret."
-            exit 0
-          fi
-
-      - name: Check DNS and CORS for the FASALSATHI origin
-        shell: bash
-        env:
-          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-        run: |
-          set -euo pipefail
-          if [ -z "$SUPABASE_PROJECT_REF" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
-            echo "Project ref or publishable key is not configured. Skipping endpoint check."
-            exit 0
-          fi
-          HOST="${SUPABASE_PROJECT_REF}.supabase.co"
-          ENDPOINT="https://${HOST}/functions/v1/rapid-endpoint"
-          echo "=== DNS lookup for $HOST ==="
+          HOST="aaslgfnfdxhgoqwwpgnz.supabase.co"
+          echo "=== Google DNS lookup ==="
           curl --fail --silent --show-error --max-time 20 \
             "https://dns.google/resolve?name=$HOST&type=A" | jq '{Status,Answer,Comment}'
-          echo "=== Browser CORS preflight for https://ambkeshwargupta.github.io ==="
+          echo "=== GitHub runner resolver ==="
+          getent ahosts "$HOST"
+
+      - name: Check Supabase REST API and scanner preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://aaslgfnfdxhgoqwwpgnz.supabase.co"
+          echo "=== Supabase REST endpoint reachability ==="
           curl --silent --show-error --max-time 25 \
-            --dump-header /tmp/headers --output /tmp/body \
-            --write-out "HTTP_STATUS=%{http_code}\n" \
-            --request OPTIONS "$ENDPOINT" \
+            --output /tmp/rest-body --dump-header /tmp/rest-headers \
+            --write-out "REST_HTTP_STATUS=%{http_code}\n" \
+            "$BASE/rest/v1/"
+          head -n 1 /tmp/rest-headers || true
+          echo "=== rapid-endpoint CORS preflight ==="
+          curl --silent --show-error --max-time 25 \
+            --output /tmp/scan-body --dump-header /tmp/scan-headers \
+            --write-out "SCAN_OPTIONS_HTTP_STATUS=%{http_code}\n" \
+            --request OPTIONS "$BASE/functions/v1/rapid-endpoint" \
             --header "Origin: https://ambkeshwargupta.github.io" \
             --header "Access-Control-Request-Method: POST" \
             --header "Access-Control-Request-Headers: apikey,content-type"
-          grep -iE "^(HTTP/|access-control-allow-origin:|access-control-allow-methods:|access-control-allow-headers:|vary:)" /tmp/headers
+          grep -iE "^(HTTP/|access-control-allow-origin:|access-control-allow-methods:|access-control-allow-headers:|vary:)" /tmp/scan-headers || true
+          echo "=== response body ==="
+          head -c 800 /tmp/scan-body || true
