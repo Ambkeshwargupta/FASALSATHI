@@ -72,3 +72,17 @@ Updated README to reflect current functionality, service configuration, local se
 - No changes were made to `newcoder355/fasal-sathi-`.
 - Live scanning is not yet active: the new repo still needs a newly created Supabase project, its URL and publishable key in `app-config.js`, and the GitHub Actions secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_PUBLISHABLE_KEY`, and `CROP_HEALTH_API_KEY`. The app cannot complete this external provisioning without those project credentials.
 - Test scanning only with a clear tomato-leaf photo. The screenshot image is a Vectornest promotional poster, so the real scanner should reject it as a non-crop image once the API is connected.
+
+
+## Dedicated Supabase backend build — 31 October 2026
+
+- Confirmed the new Supabase project URL and publishable key are now committed in `app-config.js`. The browser config uses only the publishable key; no Supabase secret or Kindwise provider key is placed in frontend source.
+- The retired Supabase project URL is absent from the new frontend.
+- Updated `rapid-endpoint` to validate the browser key against Supabase's managed `SUPABASE_PUBLISHABLE_KEYS` environment value (legacy anon-key fallback retained), avoiding a redundant manually configured publishable-key secret.
+- Added `disease-reports` Edge Function. It uses the Supabase server-side secret key, validates submitted scan-report data, rate-limits by request IP (per Edge isolate), and returns only reports within 5 km of supplied field locations and within the prior five days.
+- Added `supabase/migrations/20261031000100_create_disease_reports.sql`. The table has RLS enabled and direct grants revoked from `anon` and `authenticated`; only server-side service-role access is granted.
+- Updated the browser to send report inserts and nearby-report reads through `disease-reports`; there are no remaining direct `supabaseClient.from(...)` table calls in `index.html`.
+- Added `SUPABASE_DB_PASSWORD` to the backend deployment workflow. It links the project, applies migrations, sets the Crop.health provider key as a Supabase secret, and deploys both Edge Functions.
+- Updated `BACKEND_SETUP.md` and README with the full deployment steps and the privacy/abuse limitations of anonymous community reports.
+- Validation completed: frontend inline JavaScript and `app-config.js` parse successfully; repository source checks confirm no old Supabase hostname remains, no direct browser table access remains, migration RLS is present, and both Edge Functions are wired.
+- Remaining activation dependency: the user must add four repository Actions secrets (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `CROP_HEALTH_API_KEY`) and manually run **Deploy FASALSATHI database and Edge Functions**. Live scanner/database operation is not yet verified because the deployment credentials and Kindwise key have not been configured in GitHub Secrets.
