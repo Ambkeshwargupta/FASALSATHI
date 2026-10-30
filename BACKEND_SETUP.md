@@ -1,58 +1,79 @@
 # FASALSATHI backend setup
 
-This repository is intentionally isolated from the original `newcoder355/fasal-sathi-` project. The former frontend pointed at a Supabase hostname that currently returns DNS `NXDOMAIN`; copying that URL into this deployment would keep photo analysis broken.
+This is a separate backend for the `Ambkeshwargupta/FASALSATHI` repository. It does not reuse the retired Supabase project used by the original prototype.
 
-## 1. Create a dedicated Supabase project
+## Already configured
 
-Create a new Supabase project for **FASALSATHI**. From Project Settings → API, copy:
+- New Supabase URL and browser publishable key are in `app-config.js`.
+- The Crop.health image proxy is in `supabase/functions/rapid-endpoint/index.ts`.
+- The nearby disease-report service is in `supabase/functions/disease-reports/index.ts`.
+- The private `disease_reports` schema is in `supabase/migrations/`.
+- Both functions and the migration can be deployed by the GitHub Actions workflow **Deploy FASALSATHI database and Edge Functions**.
 
-- Project URL, for example `https://<project-ref>.supabase.co`
-- Publishable key (or legacy anon key if that is what the project provides)
+## 1. Create the Crop.health API key
 
-Edit `app-config.js` and set the two public frontend values:
+1. Open the [Kindwise admin panel](https://admin.kindwise.com/).
+2. Create an API key for the **Crop.health** product (not Plant.id or Plant.health).
+3. Allocate credits to the key. Check the balance and any usage limits before testing.
+4. Copy the API key once and keep it private.
 
-```js
-window.FASALSATHI_CONFIG = Object.freeze({
-  supabaseUrl: "https://YOUR-NEW-PROJECT-REF.supabase.co",
-  supabasePublishableKey: "YOUR_NEW_SUPABASE_PUBLISHABLE_KEY",
-  scanFunctionName: "rapid-endpoint"
-});
-```
+Kindwise documents the Crop.health identification API and its image-based crop/disease suggestions in its [Crop.health guide](https://www.kindwise.com/crop-health) and [example client](https://github.com/flowerchecker/crop-health-examples). The key is used only by the Supabase Edge Function, never by browser JavaScript.
 
-The Supabase URL and publishable key are intended for browser use. Do not put a Supabase secret/service-role key or the Kindwise API key in this file.
+## 2. Create four GitHub Actions secrets
 
-Until this is configured, the scanner deliberately shows a setup message instead of sending requests to the retired project URL.
+Open [FASALSATHI → Settings → Secrets and variables → Actions](https://github.com/Ambkeshwargupta/FASALSATHI/settings/secrets/actions), click **New repository secret**, and add:
 
-## 2. Add GitHub Actions repository secrets
-
-In GitHub → FASALSATHI → Settings → Secrets and variables → Actions, create:
-
-| Secret | Value |
+| Secret name | Value / where to get it |
 | --- | --- |
-| `SUPABASE_ACCESS_TOKEN` | Personal access token from your Supabase account |
-| `SUPABASE_PROJECT_REF` | The project reference from the new Supabase project URL |
-| `SUPABASE_PUBLISHABLE_KEY` | The same publishable/anon key entered in `app-config.js` |
-| `CROP_HEALTH_API_KEY` | The Crop.health API key from the Kindwise admin panel |
+| `SUPABASE_ACCESS_TOKEN` | Create a personal access token in [Supabase Account → Access Tokens](https://supabase.com/dashboard/account/tokens). |
+| `SUPABASE_PROJECT_REF` | `aaslgfnfdxhgoqwwpgnz` (the part before `.supabase.co` in the project URL). |
+| `SUPABASE_DB_PASSWORD` | The database password you created with this Supabase project. If you no longer know it, reset it in Supabase Project Settings → Database. |
+| `CROP_HEALTH_API_KEY` | The Crop.health key created in Step 1. |
 
-The deployment workflow copies `CROP_HEALTH_API_KEY` to Supabase Edge Function Secrets. It is never placed in the frontend or committed to Git.
+Do **not** create a `SUPABASE_PUBLISHABLE_KEY` secret. Supabase injects the project's publishable key into its Edge Function runtime; the function validates the browser's `apikey` header against that managed value.
 
-## 3. Deploy the Edge Function
+Do not paste access tokens, database passwords, or the Crop.health key into chat, source files, or screenshots.
 
-Open the repository Actions tab, choose **Deploy Crop.health Edge Function**, and select **Run workflow**. It links the new Supabase project, sets the server-side secrets, and deploys:
+## 3. Deploy database and functions
 
-`supabase/functions/rapid-endpoint/index.ts`
+After adding all four secrets:
 
-The function accepts the current frontend contract `POST { "image": "<base64>" }`, calls the official Crop.health identification API server-side, and returns the native result object expected by `crop-scan.js`. It handles browser CORS for `https://ambkeshwargupta.github.io` and local development origins.
+1. Open the repository [Actions tab](https://github.com/Ambkeshwargupta/FASALSATHI/actions).
+2. Select **Deploy FASALSATHI database and Edge Functions**.
+3. Click **Run workflow** on branch `main`.
+4. Wait for the workflow to complete successfully.
 
-The Edge Function has platform JWT verification disabled because this static prototype does not have Supabase Auth sessions. It validates the public `apikey` header against a server-side copy of the app's publishable key, validates image size/type, and applies a per-instance request throttle. That per-instance throttle is a basic abuse guard, not a global quota system; add persistent rate limiting before broad public launch.
+The workflow checks both TypeScript functions, links the Supabase project, applies the database migration, stores the Crop.health key as a server-side Edge Function secret, and deploys `rapid-endpoint` and `disease-reports`.
 
-## 4. Alerts and reports
+## 4. What the backend does
 
-Photo identification is independent of the `disease_reports` table. Saving reports and displaying nearby alerts still require a separate table/migration and policies. Those are intentionally not invented here; implement them when the FASALSATHI alert-management requirements are finalized.
+### Crop scanner
 
-## Current status
+The browser sends a base64 crop image to `rapid-endpoint`. The function calls Crop.health server-to-server and returns the Crop.health result for the existing tomato validation and result UI. The provider key stays in Supabase secrets.
 
-- Frontend configuration is isolated in `app-config.js`.
-- The old, non-resolving Supabase project reference is no longer present in the frontend.
-- The Edge Function source and deployment workflow are committed in this repository.
-- Live photo analysis remains inactive until a new Supabase project and the two provider/project keys above are configured and the function is deployed.
+### Disease reports and nearby alerts
+
+The browser no longer reads or writes `disease_reports` directly. The `disease-reports` Edge Function uses the server-side Supabase key, and the SQL migration enables RLS while revoking direct table privileges from `anon` and `authenticated`. The function accepts validated image-scan reports and only returns reports within 5 km of the supplied saved field coordinates, from the previous five days.
+
+Reports include the saved field's coordinates and disease name so the app can calculate nearby activity. These are community-submitted, unconfirmed reports—not verified outbreaks. Because this prototype has no farmer login, the public report endpoint cannot prove a report's author; rate limits and validation reduce casual abuse but are not a substitute for authenticated accounts and durable abuse controls. Do not use the current nearby-report feature as an official disease-warning service.
+
+## 5. Test the new deployment
+
+After a successful workflow run:
+
+- Open the live site: [FASALSATHI](https://ambkeshwargupta.github.io/FASALSATHI/).
+- Upload a clear, close-up tomato-leaf photo (not a poster, screenshot, or unrelated image).
+- Confirm the scanner returns a Crop.health assessment and that a confident non-tomato image is rejected.
+- Save a valid assessment to a field, then open Alerts to test the nearby-report path.
+
+Use one or two test photos first; real Crop.health checks may consume credits.
+
+## Troubleshooting
+
+- **`scanBackendSetup`**: check `app-config.js` is configured and the latest GitHub Pages deployment succeeded.
+- **HTTP 401 / invalid app key**: ensure the site uses the publishable key belonging to this exact Supabase project, then refresh the page.
+- **HTTP 503 / backend not configured**: add `CROP_HEALTH_API_KEY` as an Edge Function secret and rerun the backend workflow.
+- **HTTP 502 from Crop.health**: check the Crop.health API key, credit balance, usage limits, and Supabase function logs.
+- **Workflow fails before deployment**: check the four GitHub repository secrets; the database password and Supabase access token are separate credentials.
+
+The Supabase database password, access token and Kindwise key remain private. Never commit them to GitHub.
