@@ -898,11 +898,18 @@
         <button type="button" class="btn btn-secondary full" data-route="support" data-i18n="needHelp">Need extension support?</button>
       </section><section class="screen" id="screen-done"><div class="complete"><div class="success-icon">✓</div><h2 data-i18n="doneTitle">Your field is ready</h2><p data-i18n="doneSubtitle">Location, crop details and available readings have been saved on this device.</p><div class="summary"><div class="summary-row"><span data-i18n="summaryFieldName">Field</span><strong id="summaryFieldName">—</strong></div><div class="summary-row"><span data-i18n="selectedCrop">Crop</span><strong id="summaryCrop">—</strong></div><div class="summary-row"><span data-i18n="summaryStage">Plant stage</span><strong id="summaryStage">—</strong></div><div class="summary-row" hidden><span data-i18n="fieldCoordinates">Field coordinates</span><strong id="summaryCoordinates">—</strong></div><div class="summary-row" hidden><span data-i18n="summaryWeather">Weather input</span><strong id="summaryWeather">—</strong></div><div class="summary-row" hidden><span data-i18n="summaryInputs">Optional devices</span><strong id="summaryInputs">—</strong></div></div><div class="next-module" data-i18n="fieldToolsReady">Your field is ready. Open its tools to run the TOMCAST forecast or check visible symptoms with the camera demo.</div><div class="actions"><button type="button" class="btn btn-primary" id="openFieldTools" data-i18n="openFieldTools">Open forecast & scan</button><button type="button" class="btn btn-secondary" id="editLocationBtn" data-i18n="editLocation">Edit location</button><button type="button" class="btn btn-secondary" id="editDetailsBtn" data-i18n="editDetails">Edit details</button><button type="button" class="btn btn-primary" id="backToFields" data-i18n="backToFields">Back to fields</button></div></div><div class="footer-note" data-i18n="localOnly">Saved on this device only.</div></section></main><nav id="bottomNav" class="bottom-nav" hidden aria-label="Main navigation" data-i18n-aria="mainNavigation"><button type="button" class="nav-item" data-route="home"><svg class="icon" aria-hidden="true"><use href="#i-home"></use></svg><span data-i18n="navHome">Home</span></button><button type="button" class="nav-item" data-route="fields"><svg class="icon" aria-hidden="true"><use href="#i-fields"></use></svg><span data-i18n="navFields">Fields</span></button><button type="button" class="nav-item" data-route="scan"><svg class="icon" aria-hidden="true"><use href="#i-scan"></use></svg><span data-i18n="navScan">Scan</span></button><button type="button" class="nav-item" data-route="alerts"><svg class="icon" aria-hidden="true"><use href="#i-bell"></use></svg><span data-i18n="navAlerts">Alerts</span></button></nav><div id="toast" class="toast" role="status" aria-live="polite" hidden></div></div><noscript>This prototype needs JavaScript enabled in your browser.</noscript><script src="tomcast.js"></script><script src="crop-scan.js"></script><script src="app-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 const FASALSATHI_CONFIG = window.FASALSATHI_CONFIG || {};
-const SUPABASE_URL = String(FASALSATHI_CONFIG.supabaseUrl || '').trim().replace(/\\/+$/, '');
+const SUPABASE_URL_INPUT = String(FASALSATHI_CONFIG.supabaseUrl || '').trim();
+const SUPABASE_URL = SUPABASE_URL_INPUT.endsWith('/')
+  ? SUPABASE_URL_INPUT.slice(0, -1)
+  : SUPABASE_URL_INPUT;
 const SUPABASE_PUBLISHABLE_KEY = String(FASALSATHI_CONFIG.supabasePublishableKey || '').trim();
 const SCAN_FUNCTION_NAME = String(FASALSATHI_CONFIG.scanFunctionName || 'rapid-endpoint').trim();
+const SUPABASE_HOST = SUPABASE_URL.startsWith('https://') ? SUPABASE_URL.slice(8) : '';
+const SUPABASE_REF = SUPABASE_HOST.endsWith('.supabase.co')
+  ? SUPABASE_HOST.slice(0, -'.supabase.co'.length)
+  : '';
 const SUPABASE_CONFIGURED =
-  /^https:\\/\\/[a-z0-9-]+\\.supabase\\.co$/i.test(SUPABASE_URL) &&
+  /^[a-z0-9-]+$/i.test(SUPABASE_REF) &&
   SUPABASE_PUBLISHABLE_KEY.length > 20 &&
   !/YOUR_|REPLACE_ME|PLACEHOLDER/i.test(SUPABASE_PUBLISHABLE_KEY);
 const SCAN_ENDPOINT_URL = SUPABASE_CONFIGURED
