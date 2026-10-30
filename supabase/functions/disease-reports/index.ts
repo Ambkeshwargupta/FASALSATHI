@@ -168,11 +168,11 @@ Deno.serve(async (request) => {
         const lonDelta = 5 / Math.max(1, 111.32 * Math.cos(point.latitude * Math.PI / 180));
         const params = new URLSearchParams();
         params.set("select", "id,field_id,disease,latitude,longitude,confidence,created_at");
-        params.append("created_at", "gte." + cutoff);
-        params.append("latitude", "gte." + Math.max(-90, point.latitude - latDelta));
-        params.append("latitude", "lte." + Math.min(90, point.latitude + latDelta));
-        params.append("longitude", "gte." + Math.max(-180, point.longitude - lonDelta));
-        params.append("longitude", "lte." + Math.min(180, point.longitude + lonDelta));
+        const minLat = Math.max(-90, point.latitude - latDelta);
+        const maxLat = Math.min(90, point.latitude + latDelta);
+        const minLon = Math.max(-180, point.longitude - lonDelta);
+        const maxLon = Math.min(180, point.longitude + lonDelta);
+        params.set("and", `(created_at.gte.${cutoff},latitude.gte.${minLat},latitude.lte.${maxLat},longitude.gte.${minLon},longitude.lte.${maxLon})`);
         params.set("order", "created_at.desc");
         params.set("limit", String(MAX_REPORTS_PER_FIELD));
         const rows = await dbRequest("disease_reports?" + params.toString()) as Record<string, unknown>[];
