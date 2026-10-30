@@ -24,9 +24,9 @@ const { chromium } = require(require.resolve('playwright', {
     });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(process.env.DEPLOYMENT_URL || 'https://newcoder355.github.io/fasal-sathi-/', { timeout: 45000 });
+    await page.goto(process.env.DEPLOYMENT_URL || 'https://ambkeshwargupta.github.io/FASALSATHI/', { timeout: 45000 });
     await page.waitForFunction(() => typeof Tomcast !== 'undefined');
-    for (const file of ['index.html', 'tomcast.js']) {
+    for (const file of ['index.html', 'app-config.js', 'app.css', 'tomcast.js', 'crop-scan.js']) {
       const deployed = await page.evaluate(async file => {
         const response = await fetch(file, { cache: 'no-store' });
         if (!response.ok) throw new Error('Deployment HTTP ' + response.status);
