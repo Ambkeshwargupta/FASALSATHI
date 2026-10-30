@@ -69,8 +69,18 @@ Deno.serve(async (request) => {
   }
 
   const providerKey = Deno.env.get("CROP_HEALTH_API_KEY")?.trim();
-  const expectedAppKey = Deno.env.get("FASALSATHI_PUBLISHABLE_KEY")?.trim();
   const suppliedAppKey = request.headers.get("apikey")?.trim() ?? "";
+  const rawPublishableKeys = Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "";
+  let expectedAppKey = Deno.env.get("FASALSATHI_PUBLISHABLE_KEY")?.trim() ?? "";
+  if (!expectedAppKey && rawPublishableKeys) {
+    try {
+      const parsed = JSON.parse(rawPublishableKeys);
+      expectedAppKey = String(parsed.default ?? Object.values(parsed)[0] ?? "").trim();
+    } catch {
+      expectedAppKey = "";
+    }
+  }
+  if (!expectedAppKey) expectedAppKey = Deno.env.get("SUPABASE_ANON_KEY")?.trim() ?? "";
 
   if (!providerKey || !expectedAppKey) {
     return jsonResponse({ success: false, error: "scan_backend_not_configured" }, 503, origin);
