@@ -50,3 +50,14 @@ Updated README to reflect current functionality, service configuration, local se
 - Third layout correction: desktop/tablet offsets now apply directly to the app's topbar, setup progress region, and main content using `margin-left` plus reduced width; the body and `.app` wrapper remain viewport-wide. Mobile explicitly resets these regions to full width. This avoids the earlier body-padding/wrapper-offset approaches that did not move the dashboard's actual content region.
 
 - Definitive sidebar rebuild: replaced the fixed-overlay/margin-compensation layout with a true CSS Grid workspace. On desktop the sidebar occupies grid column 1 (258px) and remains sticky; topbar, progress strip and main content occupy grid column 2. Tablet uses an 83px rail. Mobile switches back to a single-column layout with the existing bottom nav. Added a versioned stylesheet URL to force clients to fetch the revised layout CSS. This supersedes the previous margin/body-padding fixes.
+
+
+## Crop photo service connectivity investigation — 31 October 2026
+
+- The Hindi UI error shown during photo check maps to `scanNetworkError` from `crop-scan.js`: the browser's `fetch()` failed before a readable HTTP response was received.
+- `index.html` points photo checks to the Supabase Edge Function `https://cyopgofpflgnhzgmvynb.supabase.co/functions/v1/rapid-endpoint`. The original and new repositories still reference the same Supabase project and function.
+- The repository does not contain the deployed Edge Function source. The README explicitly notes that the function and database migrations are not provisioned by cloning this frontend.
+- A GitHub Actions reachability probe in this repository attempted an OPTIONS preflight and failed at DNS resolution: `curl: (6) Could not resolve host: cyopgofpflgnhzgmvynb.supabase.co`. This explains why the browser reports a connection failure; it is not caused by the selected image's preview or the page layout.
+- Added `.github/workflows/diagnose-scan-endpoint.yml` to investigate DNS and CORS for the new and original GitHub Pages origins. A follow-up run adds DNS-over-HTTPS lookup before repeating the preflight.
+- No files or services in the original `newcoder355/fasal-sathi-` repository were changed during this investigation.
+- To complete an isolated fix in this repository, it needs an active Supabase project URL and a deployed browser-accessible Crop.health Edge Function (with CORS for `https://ambkeshwargupta.github.io`). The Kindwise API key must remain in server-side Supabase secrets, not in browser code.
