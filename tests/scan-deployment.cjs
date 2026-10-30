@@ -7,8 +7,8 @@ const {chromium}=require(require.resolve('playwright',{paths:[process.env.CODEX_
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined,args:['--no-sandbox'],...(proxy?{proxy:{server:proxy.origin}}:{})});
  try{
   const page=await browser.newPage({ignoreHTTPSErrors:process.env.TEST_IGNORE_HTTPS_ERRORS==='1',viewport:{width:390,height:844}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(process.env.DEPLOYMENT_URL||'https://newcoder355.github.io/fasal-sathi-/',{timeout:45000});
-  for(const file of ['index.html','crop-scan.js']){const actual=await page.evaluate(async f=>(await fetch(f,{cache:'no-store'})).text(),file);assert.equal(actual,fs.readFileSync(path.join(__dirname,'..',file),'utf8'),'Deployment mismatch: '+file);}
+  await page.goto(process.env.DEPLOYMENT_URL||'https://ambkeshwargupta.github.io/FASALSATHI/',{timeout:45000});
+  for(const file of ['index.html','app-config.js','app.css','crop-scan.js','tomcast.js']){const actual=await page.evaluate(async f=>(await fetch(f,{cache:'no-store'})).text(),file);assert.equal(actual,fs.readFileSync(path.join(__dirname,'..',file),'utf8'),'Deployment mismatch: '+file);}
   await page.locator('[data-lang="en"]').click();await page.locator('#homeQuickScan').click();await page.locator('#globalScanInput').setInputFiles(process.env.SCAN_TEST_IMAGE);await page.waitForFunction(()=>!document.getElementById('runGlobalScan').disabled);
   await page.locator('#runGlobalScan').click();await page.waitForFunction(()=>!!state.pendingScan||!document.getElementById('scanValidationMessage').hidden||!!document.getElementById('globalScanError').textContent,{},{timeout:75000});
   assert.equal(await page.locator('#globalScanError').innerText(),'');
