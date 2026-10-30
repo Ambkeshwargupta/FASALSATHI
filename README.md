@@ -2,7 +2,7 @@
 
 A tomato-focused crop assistant with photo assessments, location-based disease weather forecasts, saved field records and nearby disease-report alerts.
 
-**[Open the app](https://newcoder355.github.io/fasal-sathi-/)**
+**[Open the app](https://ambkeshwargupta.github.io/FASALSATHI/)**
 
 ## Features
 
@@ -26,7 +26,7 @@ The frontend is a static HTML/CSS/JavaScript app hosted on GitHub Pages. There i
 
 The browser sends `POST { "image": "<base64 image>" }` to the configured `rapid-endpoint` function with the Supabase publishable key in the `apikey` header. The Kindwise API key stays in the Edge Function's server-side secrets. It must never be added to this repository or browser code.
 
-The image is sent for analysis when the user selects **Check photo**. Saving an accepted disease assessment to a field also invokes the existing cloud report flow, which includes field ID, issue, coordinates and confidence. Field records and photo assessments themselves are stored in the current browser; clearing site data can remove them.
+The image is sent for analysis when the user selects **Check photo**. Saving an accepted disease assessment to a field can submit a community report through the `disease-reports` Edge Function, including field ID, issue, coordinates and confidence. Field records and photo assessments themselves are stored in the current browser; clearing site data can remove them. Direct browser access to the reports table is denied by Row Level Security.
 
 ## Run locally
 
@@ -42,9 +42,9 @@ Open `http://localhost:8080`. Internet access is needed for weather, map tiles, 
 
 ### Service configuration
 
-`supabaseUrl` and `supabasePublishableKey` are configured in `app-config.js`. The browser calls `${supabaseUrl}/functions/v1/rapid-endpoint`. This repository includes the Edge Function source at `supabase/functions/rapid-endpoint/index.ts` and a manual GitHub Actions deploy workflow. See [BACKEND_SETUP.md](BACKEND_SETUP.md).
+`supabaseUrl` and `supabasePublishableKey` are configured in `app-config.js`. The browser calls `rapid-endpoint` for crop scans and `disease-reports` for nearby reports. This repository includes both Edge Function sources, a private database migration, and a GitHub Actions deployment workflow. See [BACKEND_SETUP.md](BACKEND_SETUP.md).
 
-This repository is a separate deployment and must use its own active Supabase project. The retired project reference from the earlier prototype is deliberately not reused. The scanner's Edge Function source is included; the Kindwise key must be stored as a Supabase Edge Function secret. The `disease_reports` table and database migrations are still separate requirements for nearby alerts. The frontend uses `field_id`, `disease`, `latitude`, `longitude`, `confidence` and `source`, and reads `created_at` when present.
+This repository is a separate deployment and uses its own Supabase project. The scanner's Edge Function source and the `disease_reports` migration are included. The Kindwise key must be stored as a Supabase Edge Function secret. The reports table has RLS enabled and no direct `anon`/`authenticated` table grants; the server-side `disease-reports` function mediates report submissions and nearby reads.
 
 Tomato validation settings are in `CropScan.TOMATO_VALIDATION` in `crop-scan.js`:
 
