@@ -2,3 +2,6 @@ project_id = "fasalsathi"
 
 [functions.rapid-endpoint]
 verify_jwt = false
+
+[functions.disease-reports]
+verify_jwt = false
