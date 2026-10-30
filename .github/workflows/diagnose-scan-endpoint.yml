@@ -39,13 +39,21 @@ jobs:
             "$BASE/rest/v1/"
           head -n 1 /tmp/rest-headers || true
           echo "=== rapid-endpoint CORS preflight ==="
-          curl --silent --show-error --max-time 25 \
+          STATUS=$(curl --silent --show-error --max-time 25 \
             --output /tmp/scan-body --dump-header /tmp/scan-headers \
-            --write-out "SCAN_OPTIONS_HTTP_STATUS=%{http_code}\n" \
+            --write-out "%{http_code}" \
             --request OPTIONS "$BASE/functions/v1/rapid-endpoint" \
             --header "Origin: https://ambkeshwargupta.github.io" \
             --header "Access-Control-Request-Method: POST" \
-            --header "Access-Control-Request-Headers: apikey,content-type"
+            --header "Access-Control-Request-Headers: apikey,content-type")
+          echo "SCAN_OPTIONS_HTTP_STATUS=$STATUS"
           grep -iE "^(HTTP/|access-control-allow-origin:|access-control-allow-methods:|access-control-allow-headers:|vary:)" /tmp/scan-headers || true
-          echo "=== response body ==="
-          head -c 800 /tmp/scan-body || true
+          if [ "$STATUS" != "204" ]; then
+            echo "::error::rapid-endpoint is not deployed or its CORS preflight is failing."
+            cat /tmp/scan-body
+            exit 1
+          fi
+          grep -qi '^access-control-allow-origin: https://ambkeshwargupta.github.io' /tmp/scan-headers
+          grep -qi '^access-control-allow-methods:.*POST' /tmp/scan-headers
+          grep -qi '^access-control-allow-headers:.*content-type' /tmp/scan-headers
+          grep -qi '^access-control-allow-headers:.*apikey' /tmp/scan-headers
