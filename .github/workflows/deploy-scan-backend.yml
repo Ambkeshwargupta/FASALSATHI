@@ -1,0 +1,61 @@
+name: Deploy Crop.health Edge Function
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required repository secrets
+        shell: bash
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          CROP_HEALTH_API_KEY: ${{ secrets.CROP_HEALTH_API_KEY }}
+        run: |
+          set -euo pipefail
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF SUPABASE_PUBLISHABLE_KEY CROP_HEALTH_API_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing repository secret: $name"
+              exit 1
+            fi
+          done
+
+      - name: Check out FASALSATHI
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link the dedicated Supabase project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Set server-side Crop.health secrets
+        shell: bash
+        env:
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          CROP_HEALTH_API_KEY: ${{ secrets.CROP_HEALTH_API_KEY }}
+        run: |
+          set -euo pipefail
+          SECRETS_FILE="$RUNNER_TEMP/fasalsathi-edge-secrets.env"
+          umask 077
+          {
+            printf 'CROP_HEALTH_API_KEY=%s\n' "$CROP_HEALTH_API_KEY"
+            printf 'FASALSATHI_PUBLISHABLE_KEY=%s\n' "$SUPABASE_PUBLISHABLE_KEY"
+            printf 'ALLOWED_ORIGINS=%s\n' 'https://ambkeshwargupta.github.io'
+          } > "$SECRETS_FILE"
+          supabase secrets set --env-file "$SECRETS_FILE"
+          rm -f "$SECRETS_FILE"
+
+      - name: Deploy rapid-endpoint
+        run: supabase functions deploy rapid-endpoint --no-verify-jwt
