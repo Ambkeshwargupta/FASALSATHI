@@ -1,0 +1,48 @@
+name: Validate FASALSATHI source
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run model and CropScan tests
+        run: node --test tests/tomcast.test.cjs tests/crop-scan.test.cjs
+
+      - name: Validate browser JavaScript syntax
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+          if (scripts.length !== 1) throw new Error('Expected one inline application script; found ' + scripts.length);
+          for (let i = 0; i < scripts.length; i++) new Function(scripts[i][1]);
+          new Function(fs.readFileSync('app-config.js', 'utf8'));
+          console.log('Inline app script and app-config.js syntax OK.');
+          NODE
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check Edge Functions
+        run: |
+          deno check supabase/functions/rapid-endpoint/index.ts
+          deno check supabase/functions/disease-reports/index.ts
