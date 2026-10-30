@@ -19,14 +19,13 @@ This is a separate backend for the `Ambkeshwargupta/FASALSATHI` repository. It d
 
 Kindwise documents the Crop.health identification API and its image-based crop/disease suggestions in its [Crop.health guide](https://www.kindwise.com/crop-health) and [example client](https://github.com/flowerchecker/crop-health-examples). The key is used only by the Supabase Edge Function, never by browser JavaScript.
 
-## 2. Create four GitHub Actions secrets
+## 2. Create three GitHub Actions secrets
 
-Open [FASALSATHI → Settings → Secrets and variables → Actions](https://github.com/Ambkeshwargupta/FASALSATHI/settings/secrets/actions), click **New repository secret**, and add exactly these three secrets:
+Open [FASALSATHI → Settings → Secrets and variables → Actions](https://github.com/Ambkeshwargupta/FASALSATHI/settings/secrets/actions), click **New repository secret**, and add these three secrets:
 
 | Secret name | Value / where to get it |
 | --- | --- |
 | `SUPABASE_ACCESS_TOKEN` | Create a personal access token in [Supabase Account → Access Tokens](https://supabase.com/dashboard/account/tokens). |
-| `SUPABASE_PROJECT_REF` | `aaslgfnfdxhgoqwwpgnz` (the part before `.supabase.co` in the project URL). |
 | `SUPABASE_DB_PASSWORD` | The database password you created with this Supabase project. If you no longer know it, reset it in Supabase Project Settings → Database. |
 | `CROP_HEALTH_API_KEY` | The Crop.health key created in Step 1. |
 
@@ -74,6 +73,6 @@ Use one or two test photos first; real Crop.health checks may consume credits.
 - **HTTP 401 / invalid app key**: ensure the site uses the publishable key belonging to this exact Supabase project, then refresh the page.
 - **HTTP 503 / backend not configured**: add `CROP_HEALTH_API_KEY` as an Edge Function secret and rerun the backend workflow.
 - **HTTP 502 from Crop.health**: check the Crop.health API key, credit balance, usage limits, and Supabase function logs.
-- **Workflow fails before deployment**: check the four GitHub repository secrets; the database password and Supabase access token are separate credentials.
+- **Workflow fails before deployment**: check the three GitHub repository secrets; the database password and Supabase access token are separate credentials.
 
 The Supabase database password, access token and Kindwise key remain private. Never commit them to GitHub.
