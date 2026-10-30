@@ -1,10 +1,6 @@
-name: Diagnose crop photo service
+name: Diagnose FASALSATHI photo endpoint
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/diagnose-scan-endpoint.yml"
   workflow_dispatch:
 
 permissions:
@@ -14,30 +10,40 @@ jobs:
   preflight:
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve the configured Supabase project hostname
+      - name: Check whether the new backend is configured
         shell: bash
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
-          HOST="cyopgofpflgnhzgmvynb.supabase.co"
-          echo "=== DNS-over-HTTPS lookup: $HOST ==="
+          if [ -z "$SUPABASE_PROJECT_REF" ]; then
+            echo "FASALSATHI has no dedicated Supabase project configured yet."
+            echo "Create the project and add the SUPABASE_PROJECT_REF repository secret."
+            exit 0
+          fi
+
+      - name: Check DNS and CORS for the FASALSATHI origin
+        shell: bash
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUPABASE_PROJECT_REF" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "Project ref or publishable key is not configured. Skipping endpoint check."
+            exit 0
+          fi
+          HOST="${SUPABASE_PROJECT_REF}.supabase.co"
+          ENDPOINT="https://${HOST}/functions/v1/rapid-endpoint"
+          echo "=== DNS lookup for $HOST ==="
           curl --fail --silent --show-error --max-time 20 \
             "https://dns.google/resolve?name=$HOST&type=A" | jq '{Status,Answer,Comment}'
-          echo "=== Runner resolver lookup ==="
-          getent ahosts "$HOST" || true
-      - name: Check Supabase function CORS preflight for both deployments
-        shell: bash
-        run: |
-          set -u
-          ENDPOINT="https://cyopgofpflgnhzgmvynb.supabase.co/functions/v1/rapid-endpoint"
-          for ORIGIN in "https://newcoder355.github.io" "https://ambkeshwargupta.github.io"; do
-            echo "=== CORS preflight: $ORIGIN ==="
-            curl --silent --show-error --max-time 25 \
-              --dump-header /tmp/headers --output /tmp/body \
-              --write-out "HTTP_STATUS=%{http_code}\n" \
-              --request OPTIONS "$ENDPOINT" \
-              --header "Origin: $ORIGIN" \
-              --header "Access-Control-Request-Method: POST" \
-              --header "Access-Control-Request-Headers: apikey,content-type" || true
-            grep -iE "^(HTTP/|access-control-allow-origin:|access-control-allow-methods:|access-control-allow-headers:|vary:)" /tmp/headers 2>/dev/null || true
-            echo
-          done
+          echo "=== Browser CORS preflight for https://ambkeshwargupta.github.io ==="
+          curl --silent --show-error --max-time 25 \
+            --dump-header /tmp/headers --output /tmp/body \
+            --write-out "HTTP_STATUS=%{http_code}\n" \
+            --request OPTIONS "$ENDPOINT" \
+            --header "Origin: https://ambkeshwargupta.github.io" \
+            --header "Access-Control-Request-Method: POST" \
+            --header "Access-Control-Request-Headers: apikey,content-type"
+          grep -iE "^(HTTP/|access-control-allow-origin:|access-control-allow-methods:|access-control-allow-headers:|vary:)" /tmp/headers
