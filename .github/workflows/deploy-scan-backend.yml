@@ -1,4 +1,4 @@
-name: Deploy Crop.health Edge Function
+name: Deploy FASALSATHI database and Edge Functions
 
 on:
   workflow_dispatch:
@@ -15,11 +15,11 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           CROP_HEALTH_API_KEY: ${{ secrets.CROP_HEALTH_API_KEY }}
         run: |
           set -euo pipefail
-          for name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF SUPABASE_PUBLISHABLE_KEY CROP_HEALTH_API_KEY; do
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_PROJECT_REF SUPABASE_DB_PASSWORD CROP_HEALTH_API_KEY; do
             if [ -z "${!name}" ]; then
               echo "::error::Missing repository secret: $name"
               exit 1
@@ -34,35 +34,51 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Type-check the Edge Function
-        run: deno check supabase/functions/rapid-endpoint/index.ts
+      - name: Type-check both Edge Functions
+        run: |
+          deno check supabase/functions/rapid-endpoint/index.ts
+          deno check supabase/functions/disease-reports/index.ts
 
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
-      - name: Set server-side Crop.health secrets
+      - name: Link the dedicated Supabase project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Apply database migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push --password "$SUPABASE_DB_PASSWORD" --yes
+
+      - name: Set server-side Crop.health secret
         shell: bash
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
-          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
           CROP_HEALTH_API_KEY: ${{ secrets.CROP_HEALTH_API_KEY }}
         run: |
           set -euo pipefail
           SECRETS_FILE="$RUNNER_TEMP/fasalsathi-edge-secrets.env"
           umask 077
-          {
-            printf 'CROP_HEALTH_API_KEY=%s\n' "$CROP_HEALTH_API_KEY"
-            printf 'FASALSATHI_PUBLISHABLE_KEY=%s\n' "$SUPABASE_PUBLISHABLE_KEY"
-            printf 'ALLOWED_ORIGINS=%s\n' 'https://ambkeshwargupta.github.io'
-          } > "$SECRETS_FILE"
+          printf 'CROP_HEALTH_API_KEY=%s\n' "$CROP_HEALTH_API_KEY" > "$SECRETS_FILE"
           supabase secrets set --env-file "$SECRETS_FILE" --project-ref "$SUPABASE_PROJECT_REF"
           rm -f "$SECRETS_FILE"
 
-      - name: Deploy rapid-endpoint
-        run: supabase functions deploy rapid-endpoint --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+      - name: Deploy Crop.health scanner
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy rapid-endpoint --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+
+      - name: Deploy private disease reports service
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase functions deploy disease-reports --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
