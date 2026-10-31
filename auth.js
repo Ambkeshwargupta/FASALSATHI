@@ -126,7 +126,7 @@
   }
   async function requestOtp(){
     if(busy)return;
-    const email=$('authEmail').value.trim().toLowerCase();
+    const email=(method==='otp'?$('authEmailOtp'):$('authEmail')).value.trim().toLowerCase();
     if(!validEmail(email)){msg(tr('emailMissing'),true);return;}
     setBusy(true);msg(tr('working'));
     try{
