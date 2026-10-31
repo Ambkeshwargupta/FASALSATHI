@@ -116,7 +116,7 @@
       ['authPasswordLabel','pass'],['authConfirmPasswordLabel','confirmPass'],
       ['authPasswordHint','passwordHint'],['authConfirmHint','confirmHint'],
       ['authForgot','forgot'],['authSecurityText','note'],['authLocalNote','local'],
-      ['authSupportLine','supportLine']
+      ['authSupportLine','supportLine'],['signOutBtn','signOut']
     ];
     pairs.forEach(([id,key])=>{if($(id))$(id).textContent=tr(key);});
     $('authLoginTab').textContent=tr('signInTab');
@@ -124,8 +124,9 @@
     $('authSubmit').textContent=tr(intent==='signup'?'submitSignup':'submitLogin');
     $('authTogglePassword').textContent=$('authPassword').type==='password'?tr('show'):tr('hide');
     $('authToggleConfirm').textContent=$('authConfirmPassword').type==='password'?tr('show'):tr('hide');
-    $('authPassword').placeholder=intent==='signup'?'At least 8 characters':'Enter your password';
-    $('authConfirmPassword').placeholder=tr('confirmHint');
+    $('authEmail').placeholder=tr('emailPlaceholder');$('authFullName').placeholder=tr('namePlaceholder');
+    $('authPassword').placeholder=tr(intent==='signup'?'passwordPlaceholder':'loginPasswordPlaceholder');
+    $('authConfirmPassword').placeholder=tr('confirmPlaceholder');
   }
   function setIntent(next){
     intent=next;
