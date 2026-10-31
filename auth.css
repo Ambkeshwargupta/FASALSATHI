@@ -35,3 +35,8 @@
 .auth-security-note span{font-size:18px}
 #signOutBtn{width:auto;max-width:120px;min-height:40px;padding:7px 11px;border:1px solid #dce5dc;border-radius:11px;background:#fff;color:#365541;font-weight:700;cursor:pointer}
 @media(max-width:520px){.auth-screen-wrap{padding:0}.auth-panel{padding:18px;border-radius:18px}.auth-intro h1{font-size:30px}}
+
+.auth-single-method{display:flex;align-items:center;gap:12px;border:1px solid #e0e9df;background:#f7faf6;border-radius:13px;padding:14px 15px;margin-bottom:15px;color:#1d5b3a}
+.auth-single-method>span{font-size:21px;width:34px;height:34px;display:grid;place-items:center;background:#e8f1e6;border-radius:10px}
+.auth-single-method strong{display:block;font-size:15px}
+.auth-single-method small{display:block;color:#69766e;font-size:12px;margin-top:2px}
