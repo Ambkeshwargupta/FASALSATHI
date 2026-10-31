@@ -1281,6 +1281,7 @@ $('languageSwitch').addEventListener('change',e=>{state.lang=e.target.value;db.l
 document.querySelectorAll('[data-back],[data-route]').forEach(b=>b.addEventListener('click',()=>{const route=b.dataset.back||b.dataset.route;if(route==='scan')openScanner();else showScreen(route);}));
 function renderHome(){
   const fields=account()?.fields||[];
+  if($('dashGettingStarted'))$('dashGettingStarted').hidden=fields.length>0;
   const first=fields.find(f=>f.id===state.activeFieldId)||fields[0]||null;
   $('homeLocationTitle').textContent=first?fieldLabel(first,fields.indexOf(first)):t('noLocation');
   $('homeLocationHint').textContent=t(first?'savedLocationHint':'noLocationHint');
@@ -1302,7 +1303,7 @@ function renderHome(){
   $('dashRiskBadge').textContent=first?t(riskKey('risk',risk)):t('dashUnavailable');
   $('dashRiskBadge').className='status-pill'+(risk==='low'?' green':'');
   $('dashForecastSubtitle').textContent=first?fieldLabel(first,fields.indexOf(first))+' · '+(forecast.available?t('dashFiveDayOutlook'):t('dashForecastNeedSyncText')):t('dashForecastSubtitleEmpty');
-  const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dayNames=Array.from({length:7},(_,i)=>new Intl.DateTimeFormat(state.lang==='hi'?'hi-IN':state.lang==='mr'?'mr-IN':'en-IN',{weekday:'short'}).format(new Date(2026,0,5+i)));
   $('dashDayGrid').innerHTML=first&&forecast.days?.length?forecast.days.map(day=>{
     const d=new Date(day.date+'T12:00:00');
     const dayName=dayNames[(d.getDay()+6)%7];
@@ -1699,6 +1700,30 @@ Object.assign(translations.mr,{
  dashNoFieldsTitle:"अद्याप कोणतेही शेत नोंदवलेले नाही",dashNoFieldsText:"टोमॅटोच्या पहिल्या शेताचे स्थान, पीक तपशील आणि आरोग्य तपासण्या एकत्र ठेवण्यासाठी शेत जोडा.",dashAddField:"शेत जोडा",dashWaitingFieldLocation:"शेताच्या स्थानाची प्रतीक्षा आहे",dashNotAvailableYet:"अद्याप माहिती जोडलेली नाही",dashWeatherNotSynced:"शेताचे स्थान जोडल्यानंतर हवामान माहिती दिसेल.",dashNoPhotoTitle:"अद्याप फोटो तपासणी नाही",dashNoPhotoText:"फोटो तपासणी सुरू करण्यासाठी टोमॅटोच्या पानाचा स्पष्ट फोटो घ्या किंवा अपलोड करा.",dashOpenScanner:"पीक फोटो तपासा",
  nearbyOutbreakTitle:"जवळील रोग निरीक्षण",nearbyLiveReports:"अलीकडील अहवाल",recentNearbyReportsTitle:"जवळील अलीकडील अहवाल",outbreakDisclaimer:"हे जतन केलेल्या शेतांजवळील अलीकडील अहवालांवर आधारित संकेत आहेत; अधिकृतरीत्या पुष्टी झालेला प्रादुर्भाव नाही।",alertsIntro:"मागील पाच दिवसांचे शेत अंदाज आणि जवळील रोग अहवालांचे एकत्रित निरीक्षण.",
  pageHome:"तुमचे शेत डॅशबोर्ड",pageFields:"माझी शेते",pageField:"शेताची माहिती",pageScan:"पीक आरोग्य तपासणी",pageAlerts:"सूचना आणि अंदाज",pageSupport:"शेतकरी मदत",pageLocation:"शेताचे स्थान निवडा",pageCrop:"पीक आणि शेत तपशील",pageDone:"शेत जतन झाले",pageLanguage:"भाषा निवडा",pageAuth:"शेतकरी खाते"
+});
+Object.assign(translations.en,{
+ startHere:"YOUR FIRST STEPS",startTitle:"Set up your first field",startText:"A few simple steps bring your crop and local conditions into one view.",
+ startStepOneTitle:"Add your field",startStepOneText:"Choose the field location and save your tomato crop details.",
+ startStepTwoTitle:"Check a leaf photo",startStepTwoText:"Upload a clear tomato-leaf photo for an AI-assisted assessment.",
+ startStepThreeTitle:"Review your outlook",startStepThreeText:"See weather-led disease suitability and revisit saved checks.",
+ startHonestyNote:"Your dashboard shows your own saved information. No sample readings are presented as live farm data.",
+ fieldLocation:"Field location",syncedAt:"Synced at {time}"
+});
+Object.assign(translations.hi,{
+ startHere:"पहले ये काम करें",startTitle:"अपना पहला खेत सेट करें",startText:"कुछ आसान चरणों में फसल और स्थानीय जानकारी एक जगह पर देखें।",
+ startStepOneTitle:"अपना खेत जोड़ें",startStepOneText:"खेत का स्थान चुनें और टमाटर की फसल का विवरण सेव करें।",
+ startStepTwoTitle:"पत्ती की फोटो जाँचें",startStepTwoText:"AI आकलन के लिए टमाटर की पत्ती की साफ फोटो अपलोड करें।",
+ startStepThreeTitle:"पूर्वानुमान देखें",startStepThreeText:"मौसम आधारित रोग अनुकूलता और सेव की गई फोटो जाँच देखें।",
+ startHonestyNote:"डैशबोर्ड पर आपकी अपनी सेव की गई जानकारी दिखाई जाती है। नमूना रीडिंग को वास्तविक खेत डेटा नहीं बताया जाता।",
+ fieldLocation:"खेत का स्थान",syncedAt:"समय {time} पर अपडेट"
+});
+Object.assign(translations.mr,{
+ startHere:"पहिली पावले",startTitle:"तुमचे पहिले शेत तयार करा",startText:"काही सोप्या पायऱ्यांमध्ये पीक आणि स्थानिक माहिती एकत्र पाहा.",
+ startStepOneTitle:"तुमचे शेत जोडा",startStepOneText:"शेताचे स्थान निवडा आणि टोमॅटो पिकाचा तपशील जतन करा.",
+ startStepTwoTitle:"पानाचा फोटो तपासा",startStepTwoText:"AI मूल्यांकनासाठी टोमॅटोच्या पानाचा स्पष्ट फोटो अपलोड करा.",
+ startStepThreeTitle:"अंदाज पाहा",startStepThreeText:"हवामानावर आधारित रोग अनुकूलता आणि जतन केलेल्या तपासण्या पाहा.",
+ startHonestyNote:"डॅशबोर्डवर तुमची स्वतःची जतन केलेली माहिती दाखवली जाते. नमुना माहितीला प्रत्यक्ष शेत डेटा म्हणून दाखवले जात नाही.",
+ fieldLocation:"शेताचे स्थान",syncedAt:"{time} वाजता सिंक झाले"
 });
 loadSaved();applyLanguage();showScreen('language',true);
 if(!storageAvailable)setTimeout(()=>toast(t('storageUnavailable')),100);
