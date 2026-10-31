@@ -717,7 +717,7 @@
     a { color: inherit; text-underline-offset: 3px; }
 </style>
 <link rel="stylesheet" href="app.css?v=sidebar-grid-20261031" />
-  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="auth.css">\n  <link rel="stylesheet" href="site-refresh.css?v=20261031-2">
 </head>
 
 <body><svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs>
@@ -780,26 +780,70 @@
         </div>
       </section><section class="screen" id="screen-auth">
   <div class="auth-screen-wrap">
-    <div class="auth-hero">
-      <div class="auth-brandline"><div class="auth-brandmark" aria-hidden="true">🌱</div><div><strong>FASALSATHI</strong><small>Farmer-first crop intelligence</small></div></div>
-      <div class="auth-intro"><div class="eyebrow" id="authEyebrow">FARMER ACCOUNT</div><h1 id="authTitle">Your farm, always within reach.</h1><p id="authSubtitle">Sign in to keep your farm workspace with you. New here? Create your free account.</p></div>
-    </div>
-    <div class="auth-panel">
-      <div class="auth-single-method"><span aria-hidden="true">✉</span><div><strong id="authMethod">Email + Password</strong><small>One simple sign-in method</small></div></div>
-      <div class="auth-password-view" id="authPasswordView">
-        <div class="auth-form-switch" role="group" aria-label="Account action"><button type="button" id="authIntentToggle" aria-pressed="false">New farmer? Create a free account</button></div>
-        <form id="authPasswordForm" novalidate>
-          <div class="auth-field auth-name-field" id="authNameField" hidden><label for="authFullName" id="authNameLabel">Your name</label><input id="authFullName" name="name" type="text" maxlength="80" autocomplete="name" placeholder="Farmer name"></div>
-          <div class="auth-field"><label for="authEmail" id="authEmailLabel">Email address</label><input id="authEmail" name="email" type="email" required autocomplete="email" inputmode="email" maxlength="254" placeholder="name@example.com"></div>
-          <div class="auth-field"><label for="authPassword" id="authPasswordLabel">Password</label><input id="authPassword" name="password" type="password" required minlength="8" autocomplete="current-password" maxlength="128" placeholder="At least 8 characters"></div>
-          <button type="submit" class="auth-primary" id="authSubmit">Sign in securely</button>
-        </form>
-        <button type="button" class="auth-link" id="authForgot">Forgot password?</button>
+    <section class="auth-story" aria-labelledby="authStoryTitle">
+      <div class="auth-story-topline"><span class="auth-story-mark">🌱</span><span id="authStoryKicker">FIELD-FIRST FARMING</span></div>
+      <div class="auth-story-copy">
+        <p class="auth-story-overline" id="authStoryOverline">A PRACTICAL COMPANION FOR YOUR FARM</p>
+        <h1 id="authStoryTitle">Know your crop. Protect your harvest.</h1>
+        <p id="authStoryText">Bring crop photo checks, local weather insight and field records together in one simple workspace.</p>
       </div>
+      <div class="auth-field-illustration" aria-hidden="true">
+        <div class="auth-sun"></div>
+        <div class="auth-field-hill hill-back"></div>
+        <div class="auth-field-hill hill-front"></div>
+        <div class="auth-plant plant-one"><i></i><b></b><em></em></div>
+        <div class="auth-plant plant-two"><i></i><b></b><em></em></div>
+        <div class="auth-plant plant-three"><i></i><b></b><em></em></div>
+        <div class="auth-soil-line"></div>
+      </div>
+      <div class="auth-feature-grid">
+        <article class="auth-feature"><span class="auth-feature-icon">⌕</span><div><strong id="authFeatureOneTitle">Photo health checks</strong><small id="authFeatureOneText">AI-assisted tomato leaf assessment</small></div></article>
+        <article class="auth-feature"><span class="auth-feature-icon">☼</span><div><strong id="authFeatureTwoTitle">Local weather outlook</strong><small id="authFeatureTwoText">Weather-led TOMCAST risk guidance</small></div></article>
+        <article class="auth-feature"><span class="auth-feature-icon">▤</span><div><strong id="authFeatureThreeTitle">Field journal</strong><small id="authFeatureThreeText">Keep field details and scan history together</small></div></article>
+      </div>
+      <div class="auth-story-foot"><span class="auth-live-dot"></span><span id="authStoryFoot">Tomato crop support is available in this release.</span></div>
+    </section>
+    <section class="auth-panel" aria-labelledby="authPanelTitle">
+      <div class="auth-panel-heading">
+        <div class="auth-panel-icon">✉</div>
+        <div><p class="auth-panel-kicker" id="authPanelKicker">YOUR FARM WORKSPACE</p><h2 id="authPanelTitle">Welcome to FASALSATHI</h2><p id="authPanelSubtitle">Sign in or create your free farmer account.</p></div>
+      </div>
+      <div class="auth-form-switch" role="tablist" aria-label="Choose sign in or registration">
+        <button type="button" class="auth-tab is-active" id="authLoginTab" role="tab" aria-selected="true">Sign in</button>
+        <button type="button" class="auth-tab" id="authSignupTab" role="tab" aria-selected="false">Create account</button>
+      </div>
+      <form id="authPasswordForm" novalidate>
+        <div class="auth-field auth-name-field" id="authNameField" hidden>
+          <label for="authFullName" id="authNameLabel">Full name</label>
+          <input id="authFullName" name="name" type="text" maxlength="80" autocomplete="name" placeholder="Enter your name">
+        </div>
+        <div class="auth-field">
+          <label for="authEmail" id="authEmailLabel">Email address</label>
+          <input id="authEmail" name="email" type="email" required autocomplete="email" inputmode="email" maxlength="254" placeholder="name@example.com">
+        </div>
+        <div class="auth-field">
+          <div class="auth-label-row"><label for="authPassword" id="authPasswordLabel">Password</label><button type="button" class="auth-inline-link" id="authForgot">Forgot password?</button></div>
+          <div class="auth-password-wrap">
+            <input id="authPassword" name="password" type="password" required minlength="8" autocomplete="current-password" maxlength="128" placeholder="Enter your password">
+            <button type="button" class="auth-eye" id="authTogglePassword" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <p class="auth-field-hint" id="authPasswordHint">Use at least 8 characters.</p>
+        </div>
+        <div class="auth-field auth-confirm-field" id="authConfirmField" hidden>
+          <label for="authConfirmPassword" id="authConfirmPasswordLabel">Confirm password</label>
+          <div class="auth-password-wrap">
+            <input id="authConfirmPassword" name="confirmPassword" type="password" minlength="8" autocomplete="new-password" maxlength="128" placeholder="Re-enter your password">
+            <button type="button" class="auth-eye" id="authToggleConfirm" aria-label="Show confirm password" aria-pressed="false">Show</button>
+          </div>
+          <p class="auth-field-hint" id="authConfirmHint">Enter the same password again.</p>
+        </div>
+        <button type="submit" class="auth-primary" id="authSubmit">Sign in securely</button>
+      </form>
       <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
-      <div class="auth-security-note"><span aria-hidden="true">🔒</span><div id="authSecurityText">Your password and authentication are handled by Supabase. Never share your password.</div></div>
-      <p class="auth-helper" id="authLocalNote">Your current farm records are still stored on this device. Cloud syncing will be the next upgrade.</p>
-    </div>
+      <div class="auth-security-note"><span aria-hidden="true">🔒</span><div id="authSecurityText">Your password is encrypted and managed by Supabase. Never share it with anyone.</div></div>
+      <p class="auth-helper" id="authLocalNote">Cloud synchronization for field records is being prepared. Your current records remain on this device.</p>
+      <div class="auth-support-line"><span>FASALSATHI</span><span id="authSupportLine">A smarter start for every growing season</span></div>
+    </section>
   </div>
 </section>
 <section class="screen" id="screen-home">
@@ -1612,6 +1656,6 @@ loadSaved();applyLanguage();showScreen('language',true);
 if(!storageAvailable)setTimeout(()=>toast(t('storageUnavailable')),100);
 
 </script>
-<script src="auth.js"></script>
+<script src="auth.js"></script>\n<script src="site-ui.js"></script>
 </body>
 </html>
