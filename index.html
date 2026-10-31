@@ -785,12 +785,7 @@
       <div class="auth-intro"><div class="eyebrow" id="authEyebrow">FARMER ACCOUNT</div><h1 id="authTitle">Your farm, always within reach.</h1><p id="authSubtitle">Sign in to keep your farm workspace with you. New here? Create your free account.</p></div>
     </div>
     <div class="auth-panel">
-      <button type="button" class="auth-google" id="authGoogle"><span class="auth-google-mark" aria-hidden="true">G</span><span id="authGoogleText">Continue with Google</span></button>
-      <div class="auth-divider" id="authDivider">OR USE EMAIL</div>
-      <div class="auth-methods" role="group" aria-label="Email sign-in method">
-        <button type="button" class="auth-mode" id="authPasswordTab" aria-pressed="true">Email &amp; password</button>
-        <button type="button" class="auth-mode" id="authOtpTab" aria-pressed="false">Email OTP</button>
-      </div>
+      <div class="auth-single-method"><span aria-hidden="true">✉</span><strong>Email + Password</strong><small>One simple sign-in method</small></div>
       <div class="auth-password-view" id="authPasswordView">
         <div class="auth-form-switch" role="group" aria-label="Account action"><button type="button" id="authIntentToggle" aria-pressed="false">New farmer? Create a free account</button></div>
         <form id="authPasswordForm" novalidate>
@@ -801,19 +796,8 @@
         </form>
         <button type="button" class="auth-link" id="authForgot">Forgot password?</button>
       </div>
-      <div class="auth-otp-view" id="authOtpView" hidden>
-        <div class="auth-field"><label for="authEmail">Email address</label><input id="authEmailOtp" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com"></div>
-        <button type="button" class="auth-primary" id="authSendOtp">Send one-time code</button>
-        <div class="auth-otp-entry" hidden>
-          <p class="auth-helper">Enter the code sent to <strong id="authOtpEmail"></strong>.</p>
-          <div class="auth-field"><label for="authOtpCode" id="authOtpLabel">6-digit email code</label><input id="authOtpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456"></div>
-          <button type="button" class="auth-primary" id="authVerifyOtp">Verify code &amp; continue</button>
-          <button type="button" class="auth-link" id="authResendOtp">Send a new code</button>
-          <button type="button" class="auth-link" id="authChangeEmail">Use a different email</button>
-        </div>
-      </div>
       <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
-      <div class="auth-security-note"><span aria-hidden="true">🔒</span><div id="authSecurityText">Your password and authentication are handled by Supabase. Never share your password or verification code.</div></div>
+      <div class="auth-security-note"><span aria-hidden="true">🔒</span><div id="authSecurityText">Your password and authentication are handled by Supabase. Never share your password.</div></div>
       <p class="auth-helper" id="authLocalNote">Your current farm records are still stored on this device. Cloud syncing will be the next upgrade.</p>
     </div>
   </div>
