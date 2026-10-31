@@ -4,7 +4,7 @@
   const $ = (id) => document.getElementById(id);
   const copy = {
     en: {
-      eyebrow:'FARMER ACCOUNT', title:'Know your crop. Protect your harvest.',
+      signOut:'Sign out',emailPlaceholder:'name@example.com',namePlaceholder:'Enter your name',passwordPlaceholder:'At least 8 characters',loginPasswordPlaceholder:'Enter your password',confirmPlaceholder:'Re-enter your password',eyebrow:'FARMER ACCOUNT', title:'Know your crop. Protect your harvest.',
       subtitle:'Bring crop photo checks, local weather insight and field records together in one simple workspace.',
       storyKicker:'FIELD-FIRST FARMING', storyOverline:'A PRACTICAL COMPANION FOR YOUR FARM',
       feature1Title:'Photo health checks',feature1Text:'AI-assisted tomato leaf assessment',
@@ -33,7 +33,7 @@
       loginSuccess:'You are signed in.'
     },
     hi: {
-      eyebrow:'किसान खाता',title:'अपनी फसल जानें। अपनी उपज बचाएँ।',
+      signOut:'लॉग आउट',emailPlaceholder:'name@example.com',namePlaceholder:'अपना नाम लिखें',passwordPlaceholder:'कम से कम 8 अक्षर',loginPasswordPlaceholder:'अपना पासवर्ड डालें',confirmPlaceholder:'पासवर्ड दोबारा डालें',eyebrow:'किसान खाता',title:'अपनी फसल जानें। अपनी उपज बचाएँ।',
       subtitle:'फसल की फोटो जाँच, स्थानीय मौसम की जानकारी और खेत का रिकॉर्ड एक ही आसान जगह पर रखें।',
       storyKicker:'खेत-केंद्रित खेती',storyOverline:'आपके खेत के लिए एक उपयोगी साथी',
       feature1Title:'फोटो से फसल जाँच',feature1Text:'टमाटर की पत्ती का AI आकलन',
@@ -62,7 +62,7 @@
       loginSuccess:'आप सफलतापूर्वक लॉगिन हो गए हैं।'
     },
     mr: {
-      eyebrow:'शेतकरी खाते',title:'तुमचे पीक ओळखा. तुमचे उत्पादन जपा.',
+      signOut:'लॉग आउट',emailPlaceholder:'name@example.com',namePlaceholder:'तुमचे नाव लिहा',passwordPlaceholder:'किमान 8 अक्षरे',loginPasswordPlaceholder:'तुमचा पासवर्ड टाका',confirmPlaceholder:'पासवर्ड पुन्हा टाका',eyebrow:'शेतकरी खाते',title:'तुमचे पीक ओळखा. तुमचे उत्पादन जपा.',
       subtitle:'पीक फोटो तपासणी, स्थानिक हवामान माहिती आणि शेताची नोंद एकाच सोप्या ठिकाणी ठेवा.',
       storyKicker:'शेत-केंद्रित शेती',storyOverline:'तुमच्या शेतासाठी उपयुक्त साथीदार',
       feature1Title:'फोटोद्वारे पीक तपासणी',feature1Text:'टोमॅटोच्या पानाचे AI मूल्यांकन',
@@ -204,7 +204,7 @@
     const input=$(inputId),button=$(buttonId);if(!input||!button)return;
     const visible=input.type==='password';input.type=visible?'text':'password';
     button.setAttribute('aria-pressed',String(visible));
-    button.setAttribute('aria-label',visible?'Hide password':'Show password');
+    button.setAttribute('aria-label',visible?tr('hide'):tr('show'));
     button.textContent=visible?tr('hide'):tr('show');
   }
   async function signOut(){
