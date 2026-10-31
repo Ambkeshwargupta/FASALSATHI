@@ -1419,22 +1419,19 @@ async function recentDiseaseReports(){
  })().catch(error=>{console.warn('Supabase outbreak read failed:',error);outbreakCache.promise=null;throw error;});
  return outbreakCache.promise;
 }
-function weatherRiskText(risk){
- const labels={low:'Low',mild:'Mild',moderate:'Moderate',high:'High',veryHigh:'Very high',unknown:'Unknown'};
- return labels[risk]||'Unknown';
-}
+function weatherRiskText(risk){return t(riskKey('risk',risk||'unknown'));}
 function outbreakLevel(count,weatherRisk){
- if(count>=3&&(weatherRisk==='high'||weatherRisk==='veryHigh'))return {label:'High outbreak risk',detail:'Multiple nearby reports + favourable TOMCAST weather'};
- if(count>=3)return {label:'Outbreak watch',detail:'3 or more unique nearby fields reported the same disease'};
- if(count===2)return {label:'Nearby activity',detail:'2 unique nearby fields reported the same disease'};
- if(count===1)return {label:'Isolated report',detail:'1 nearby field reported this disease'};
+ if(count>=3&&(weatherRisk==='high'||weatherRisk==='veryHigh'))return {label:t('outbreakHigh'),detail:t('outbreakHighDetail')};
+ if(count>=3)return {label:t('outbreakWatch'),detail:t('outbreakWatchDetail')};
+ if(count===2)return {label:t('nearbyActivity'),detail:t('nearbyActivityDetail')};
+ if(count===1)return {label:t('isolatedReport'),detail:t('isolatedReportDetail')};
  return null;
 }
 async function loadNearbyOutbreaks(){
  const box=$('nearbyOutbreakList'),recentBox=$('recentNearbyList'),recentWrap=$('recentNearbyWrap');if(!box)return;
  const fields=account()?.fields||[];
- if(!fields.length){box.innerHTML='<p class="small">Add a field location to check nearby disease activity.</p>';if(recentWrap)recentWrap.hidden=true;return;}
- box.innerHTML='<p class="small">Checking nearby reports…</p>';if(recentWrap)recentWrap.hidden=true;
+ if(!fields.length){box.innerHTML='<p class="small">'+escapeHtml(t('addFieldForNearby'))+'</p>';if(recentWrap)recentWrap.hidden=true;return;}
+ box.innerHTML='<p class="small">'+escapeHtml(t('checkingNearbyReports'))+'</p>';if(recentWrap)recentWrap.hidden=true;
  try{
   const reports=await recentDiseaseReports();
   const bestByDisease=new Map();
@@ -1467,19 +1464,19 @@ async function loadNearbyOutbreaks(){
   box.innerHTML=outbreakCards.length?outbreakCards.map(c=>{
     const weather=weatherRiskText(c.weatherRisk),overall=c.level.label;
     return '<div class="alerts-field-item"><strong>'+escapeHtml(c.disease+' · '+overall)+'</strong>'+
-      '<p><strong>Nearby cases:</strong> '+escapeHtml(String(c.count))+' unique affected fields</p>'+
-      '<p><strong>Area:</strong> within 5 km · farthest matched report '+escapeHtml(c.maxDistance.toFixed(1))+' km</p>'+
-      '<p><strong>Weather suitability:</strong> '+escapeHtml(weather)+'</p>'+
-      '<p><strong>Overall risk:</strong> '+escapeHtml(overall)+'</p>'+
+      '<p><strong>'+escapeHtml(t('nearbyCases'))+':</strong> '+escapeHtml(String(c.count))+' '+escapeHtml(t('affectedFields'))+'</p>'+
+      '<p><strong>'+escapeHtml(t('areaLabel'))+':</strong> '+escapeHtml(t('withinFiveKm'))+' '+escapeHtml(c.maxDistance.toFixed(1))+' km</p>'+
+      '<p><strong>'+escapeHtml(t('weatherSuitability'))+':</strong> '+escapeHtml(weather)+'</p>'+
+      '<p><strong>'+escapeHtml(t('overallRisk'))+':</strong> '+escapeHtml(overall)+'</p>'+
       '<p class="small">'+escapeHtml(c.level.detail)+'</p></div>';
-  }).join(''):'<p class="small">No outbreak watch or nearby activity detected within 5 km in the last 5 days.</p>';
+  }).join(''):'<p class="small">'+escapeHtml(t('noNearbyActivity'))+'</p>';
   if(recentBox&&recentWrap){
     recentWrap.hidden=!isolatedCards.length;
-    recentBox.innerHTML=isolatedCards.map(c=>'<div class="alerts-field-item"><strong>'+escapeHtml(c.disease)+'</strong><p>'+escapeHtml('1 isolated report within 5 km · '+c.maxDistance.toFixed(1)+' km from the nearest saved field')+'</p><p class="small">Not enough nearby reports to trigger an outbreak watch.</p></div>').join('');
+    recentBox.innerHTML=isolatedCards.map(c=>'<div class="alerts-field-item"><strong>'+escapeHtml(c.disease)+'</strong><p>'+escapeHtml(t('isolatedReportLine',{distance:c.maxDistance.toFixed(1)}))+'</p><p class="small">'+escapeHtml(t('notEnoughReports'))+'</p></div>').join('');
   }
  }catch(error){
   const message=error?.message||error?.details||'Unknown database error';
-  box.innerHTML='<p class="small">Nearby reports could not be loaded.</p><p class="small">Database message: '+escapeHtml(String(message))+'</p>';
+  box.innerHTML='<p class="small">'+escapeHtml(t('nearbyLoadFailed'))+'</p><p class="small">'+escapeHtml(t('databaseMessage'))+' '+escapeHtml(String(message))+'</p>';
   if(recentWrap)recentWrap.hidden=true;
  }
 }
@@ -1724,6 +1721,39 @@ Object.assign(translations.mr,{
  startStepThreeTitle:"अंदाज पाहा",startStepThreeText:"हवामानावर आधारित रोग अनुकूलता आणि जतन केलेल्या तपासण्या पाहा.",
  startHonestyNote:"डॅशबोर्डवर तुमची स्वतःची जतन केलेली माहिती दाखवली जाते. नमुना माहितीला प्रत्यक्ष शेत डेटा म्हणून दाखवले जात नाही.",
  fieldLocation:"शेताचे स्थान",syncedAt:"{time} वाजता सिंक झाले"
+});
+Object.assign(translations.en,{
+ addFieldForNearby:"Add a field location to check nearby disease activity.",checkingNearbyReports:"Checking nearby reports…",
+ outbreakHigh:"High outbreak risk",outbreakHighDetail:"Multiple nearby reports plus weather conditions favourable to disease development.",
+ outbreakWatch:"Outbreak watch",outbreakWatchDetail:"Three or more unique nearby fields reported the same disease.",
+ nearbyActivity:"Nearby activity",nearbyActivityDetail:"Two unique nearby fields reported the same disease.",
+ isolatedReport:"Isolated report",isolatedReportDetail:"One nearby field reported this disease.",
+ nearbyCases:"Nearby cases",affectedFields:"unique affected fields",areaLabel:"Area",withinFiveKm:"within 5 km · farthest matched report",weatherSuitability:"Weather suitability",overallRisk:"Overall risk",
+ noNearbyActivity:"No outbreak watch or nearby activity was detected within 5 km in the last 5 days.",
+ isolatedReportLine:"1 isolated report within 5 km · {distance} km from the nearest saved field.",
+ notEnoughReports:"Not enough nearby reports to trigger an outbreak watch.",nearbyLoadFailed:"Nearby reports could not be loaded.",databaseMessage:"Database message:"
+});
+Object.assign(translations.hi,{
+ addFieldForNearby:"आस-पास की रोग गतिविधि देखने के लिए खेत का स्थान जोड़ें।",checkingNearbyReports:"आस-पास की रिपोर्ट देखी जा रही हैं…",
+ outbreakHigh:"प्रकोप का उच्च जोखिम",outbreakHighDetail:"आस-पास की कई रिपोर्ट और रोग के अनुकूल मौसम की स्थिति।",
+ outbreakWatch:"प्रकोप पर नज़र",outbreakWatchDetail:"तीन या अधिक अलग-अलग पास के खेतों में यही रोग दर्ज हुआ।",
+ nearbyActivity:"आस-पास गतिविधि",nearbyActivityDetail:"दो अलग-अलग पास के खेतों में यही रोग दर्ज हुआ।",
+ isolatedReport:"अलग-थलग रिपोर्ट",isolatedReportDetail:"एक पास के खेत में यह रोग दर्ज हुआ।",
+ nearbyCases:"आस-पास के मामले",affectedFields:"प्रभावित अलग-अलग खेत",areaLabel:"क्षेत्र",withinFiveKm:"5 किमी के भीतर · सबसे दूर की मिलती रिपोर्ट",weatherSuitability:"मौसम की अनुकूलता",overallRisk:"कुल जोखिम",
+ noNearbyActivity:"पिछले 5 दिनों में 5 किमी के भीतर प्रकोप या आस-पास की गतिविधि नहीं मिली।",
+ isolatedReportLine:"5 किमी के भीतर 1 अलग रिपोर्ट · सबसे पास के सेव खेत से {distance} किमी।",
+ notEnoughReports:"प्रकोप अलर्ट जारी करने के लिए आस-पास पर्याप्त रिपोर्ट नहीं हैं।",nearbyLoadFailed:"आस-पास की रिपोर्ट लोड नहीं हो सकीं।",databaseMessage:"डेटाबेस संदेश:"
+});
+Object.assign(translations.mr,{
+ addFieldForNearby:"जवळील रोग हालचाल पाहण्यासाठी शेताचे स्थान जोडा.",checkingNearbyReports:"जवळील अहवाल तपासत आहोत…",
+ outbreakHigh:"प्रादुर्भावाचा उच्च धोका",outbreakHighDetail:"जवळील अनेक अहवाल आणि रोगास अनुकूल हवामान स्थिती.",
+ outbreakWatch:"प्रादुर्भाव निरीक्षण",outbreakWatchDetail:"तीन किंवा अधिक वेगवेगळ्या जवळील शेतांमध्ये हाच रोग नोंदवला आहे.",
+ nearbyActivity:"जवळील हालचाल",nearbyActivityDetail:"दोन वेगवेगळ्या जवळील शेतांमध्ये हाच रोग नोंदवला आहे.",
+ isolatedReport:"एकल अहवाल",isolatedReportDetail:"एका जवळील शेतात हा रोग नोंदवला आहे.",
+ nearbyCases:"जवळील प्रकरणे",affectedFields:"प्रभावित स्वतंत्र शेते",areaLabel:"परिसर",withinFiveKm:"5 किमीच्या आत · सर्वात दूरचा जुळणारा अहवाल",weatherSuitability:"हवामान अनुकूलता",overallRisk:"एकूण धोका",
+ noNearbyActivity:"मागील 5 दिवसांत 5 किमीच्या आत प्रादुर्भाव निरीक्षण किंवा जवळील हालचाल आढळली नाही.",
+ isolatedReportLine:"5 किमीच्या आत 1 एकल अहवाल · जवळच्या जतन केलेल्या शेतापासून {distance} किमी.",
+ notEnoughReports:"प्रादुर्भाव निरीक्षण सुरू करण्यासाठी पुरेसे जवळील अहवाल नाहीत.",nearbyLoadFailed:"जवळील अहवाल लोड करता आले नाहीत.",databaseMessage:"डेटाबेस संदेश:"
 });
 loadSaved();applyLanguage();showScreen('language',true);
 if(!storageAvailable)setTimeout(()=>toast(t('storageUnavailable')),100);
