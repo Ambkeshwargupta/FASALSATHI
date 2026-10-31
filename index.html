@@ -1219,7 +1219,7 @@ const newId = prefix => prefix+Date.now().toString(36).toUpperCase()+Math.random
 const account = () => state.user ? db.accounts[state.user] : null;
 const fieldLabel = (field,index) => field.name || t('fieldDefault',{number:index+1});
 function toast(message){ clearTimeout(toastTimer); $('toast').textContent=message; $('toast').hidden=false; toastTimer=setTimeout(()=>$('toast').hidden=true,4000); }
-function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db));storageAvailable=true;return true;}catch{storageAvailable=false;toast(t('storageUnavailable'));return false;}}
+function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db));storageAvailable=true;window.dispatchEvent(new Event('fasalsathi:local-change'));return true;}catch{storageAvailable=false;toast(t('storageUnavailable'));return false;}}
 function loadSaved(){
   try {
     const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
@@ -1759,6 +1759,7 @@ loadSaved();applyLanguage();showScreen('language',true);
 if(!storageAvailable)setTimeout(()=>toast(t('storageUnavailable')),100);
 
 </script>
+<script src="cloud-sync.js?v=20261031-1"></script>
 <script src="auth.js"></script>\n<script src="site-ui.js"></script>
 </body>
 </html>
