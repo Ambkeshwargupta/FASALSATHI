@@ -13,7 +13,7 @@ create table if not exists public.farmer_workspaces (
     jsonb_typeof(workspace->'unlinkedScans') = 'array'
     and jsonb_array_length(workspace->'unlinkedScans') <= 5
   ),
-  constraint farmer_workspaces_payload_size check (octet_length(workspace::text) <= 2097152)
+  constraint farmer_workspaces_payload_size check (octet_length(workspace::text) <= 4194304)
 );
 
 create index if not exists farmer_workspaces_updated_at_idx
