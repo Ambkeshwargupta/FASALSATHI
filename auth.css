@@ -1,0 +1,37 @@
+
+/* FASALSATHI real account access */
+.auth-screen-wrap{max-width:560px;margin:0 auto;padding:12px 0 28px}
+.auth-hero{margin-bottom:22px}
+.auth-brandline{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.auth-brandmark{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:#eaf2e8;color:#1c5a39;font-size:25px}
+.auth-brandline strong{display:block;font-size:18px}
+.auth-brandline small{color:#6b776f}
+.auth-intro h1{font-size:clamp(29px,6vw,39px);margin:0 0 9px;line-height:1.15}
+.auth-intro p{font-size:15px;max-width:440px}
+.auth-panel{background:#fff;border:1px solid #e2e9e1;border-radius:22px;padding:22px;box-shadow:0 18px 50px rgba(31,74,48,.08)}
+.auth-google{width:100%;min-height:50px;background:#fff;border:1.5px solid #dce4dc;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:11px;font-weight:750;color:#26352b;cursor:pointer}
+.auth-google:hover,.auth-mode:hover{background:#f7faf6}
+.auth-google-mark{font-size:19px;font-weight:900;color:#4285f4}
+.auth-divider{display:flex;align-items:center;gap:12px;color:#829087;font-size:12px;margin:20px 0}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#e5ebe5;flex:1}
+.auth-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#f4f7f3;border-radius:13px;padding:5px;margin:4px 0 17px}
+.auth-mode{min-height:42px;border:0;border-radius:10px;background:transparent;color:#647067;font-weight:750;cursor:pointer}
+.auth-mode[aria-pressed=true]{background:#fff;color:#1d5235;box-shadow:0 1px 5px #233d2917}
+.auth-form-switch{display:flex;gap:8px;padding-bottom:14px;border-bottom:1px solid #edf0ed;margin-bottom:14px}
+.auth-form-switch button{background:transparent;color:#67736b;font-weight:700;padding:6px 2px;cursor:pointer}
+.auth-form-switch button[aria-pressed=true]{color:#1c5a39;border-bottom:2px solid #1c5a39}
+.auth-field{margin-top:15px}
+.auth-field label{font-size:14px}
+.auth-field input{border:1.5px solid #dce5dc;border-radius:12px;min-height:49px}
+.auth-primary{width:100%;min-height:51px;border-radius:13px;background:#1e5b3b;color:#fff;font-weight:800;margin-top:19px;cursor:pointer}
+.auth-primary:hover{background:#17462e}
+.auth-primary:disabled,.auth-google:disabled{opacity:.6;cursor:wait}
+.auth-helper{font-size:13px;line-height:1.6;color:#69766e;margin-top:14px}
+.auth-link{border:0;background:transparent;color:#1b613c;font-weight:750;cursor:pointer;padding:8px 0}
+.auth-message{min-height:22px;margin:12px 0 0;font-size:14px;line-height:1.5;color:#205a39}
+.auth-message.error{color:#a52a2a}
+.auth-otp-view[hidden],.auth-password-view[hidden],.auth-name-field[hidden]{display:none}
+.auth-security-note{display:flex;gap:10px;padding:13px 14px;border-radius:13px;background:#f4f8f3;border:1px solid #e3ebe0;margin-top:18px;color:#526257;font-size:12px;line-height:1.55}
+.auth-security-note span{font-size:18px}
+#signOutBtn{width:auto;max-width:120px;min-height:40px;padding:7px 11px;border:1px solid #dce5dc;border-radius:11px;background:#fff;color:#365541;font-weight:700;cursor:pointer}
+@media(max-width:520px){.auth-screen-wrap{padding:0}.auth-panel{padding:18px;border-radius:18px}.auth-intro h1{font-size:30px}}
