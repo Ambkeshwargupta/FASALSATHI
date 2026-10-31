@@ -717,6 +717,7 @@
     a { color: inherit; text-underline-offset: 3px; }
 </style>
 <link rel="stylesheet" href="app.css?v=sidebar-grid-20261031" />
+  <link rel="stylesheet" href="auth.css">
 </head>
 
 <body><svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs>
@@ -745,7 +746,7 @@
   <button type="button" class="sidebar-add" data-add-field><svg class="icon"><use href="#i-fields"></use></svg><span data-i18n="addField">Add a field</span></button>
   <div class="sidebar-note"><strong>Field-first intelligence</strong><p>Weather-led tomato disease guidance, photo assessments and field records in one workspace.</p></div>
   <div class="sidebar-foot"><span>FASALSATHI</span><span>SIH 26131</span></div>
-</aside><header class="topbar"><div class="brand"><div class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-leaf"></use></svg></div><div>FasalSathi</div></div><div class="topbar-context"><span class="topbar-kicker">AGRICULTURE INTELLIGENCE WORKSPACE</span><strong id="topbarTitle">Your farm overview</strong></div><div class="header-tools"><span class="prototype-badge" data-i18n="demoBadge">Demo v3</span><label for="languageSwitch" class="sr-only" data-i18n="selectedLanguage">Language</label><select id="languageSwitch" hidden><option value="hi">हिंदी</option><option value="mr">मराठी</option><option value="en">English</option></select></div></header><div class="progress-wrap" id="setupProgress"><div class="progress" role="progressbar" id="progressTrack" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="33"><span id="progressBar"></span></div></div><main id="mainContent"><section class="screen active" id="screen-language">
+</aside><header class="topbar"><div class="brand"><div class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#i-leaf"></use></svg></div><div>FasalSathi</div></div><div class="topbar-context"><span class="topbar-kicker">AGRICULTURE INTELLIGENCE WORKSPACE</span><strong id="topbarTitle">Your farm overview</strong></div><div class="header-tools"><span class="prototype-badge" data-i18n="demoBadge">FASALSATHI</span><label for="languageSwitch" class="sr-only" data-i18n="selectedLanguage">Language</label><select id="languageSwitch" hidden><option value="hi">हिंदी</option><option value="mr">मराठी</option><option value="en">English</option></select><button type="button" id="signOutBtn" hidden>Sign out</button></div></header><div class="progress-wrap" id="setupProgress"><div class="progress" role="progressbar" id="progressTrack" aria-label="Setup progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="33"><span id="progressBar"></span></div></div><main id="mainContent"><section class="screen active" id="screen-language">
         <div class="section-head">
           <div class="eyebrow">FasalSathi</div>
           <h1>भाषा चुनिए</h1>
@@ -777,7 +778,47 @@
             <div class="arrow">→</div>
           </button>
         </div>
-      </section><section class="screen" id="screen-home">
+      </section><section class="screen" id="screen-auth">
+  <div class="auth-screen-wrap">
+    <div class="auth-hero">
+      <div class="auth-brandline"><div class="auth-brandmark" aria-hidden="true">🌱</div><div><strong>FASALSATHI</strong><small>Farmer-first crop intelligence</small></div></div>
+      <div class="auth-intro"><div class="eyebrow" id="authEyebrow">FARMER ACCOUNT</div><h1 id="authTitle">Your farm, always within reach.</h1><p id="authSubtitle">Sign in to keep your farm workspace with you. New here? Create your free account.</p></div>
+    </div>
+    <div class="auth-panel">
+      <button type="button" class="auth-google" id="authGoogle"><span class="auth-google-mark" aria-hidden="true">G</span><span id="authGoogleText">Continue with Google</span></button>
+      <div class="auth-divider" id="authDivider">OR USE EMAIL</div>
+      <div class="auth-methods" role="group" aria-label="Email sign-in method">
+        <button type="button" class="auth-mode" id="authPasswordTab" aria-pressed="true">Email &amp; password</button>
+        <button type="button" class="auth-mode" id="authOtpTab" aria-pressed="false">Email OTP</button>
+      </div>
+      <div class="auth-password-view" id="authPasswordView">
+        <div class="auth-form-switch" role="group" aria-label="Account action"><button type="button" id="authIntentToggle" aria-pressed="false">New farmer? Create a free account</button></div>
+        <form id="authPasswordForm" novalidate>
+          <div class="auth-field auth-name-field" id="authNameField" hidden><label for="authFullName" id="authNameLabel">Your name</label><input id="authFullName" name="name" type="text" maxlength="80" autocomplete="name" placeholder="Farmer name"></div>
+          <div class="auth-field"><label for="authEmail" id="authEmailLabel">Email address</label><input id="authEmail" name="email" type="email" required autocomplete="email" inputmode="email" maxlength="254" placeholder="name@example.com"></div>
+          <div class="auth-field"><label for="authPassword" id="authPasswordLabel">Password</label><input id="authPassword" name="password" type="password" required minlength="8" autocomplete="current-password" maxlength="128" placeholder="At least 8 characters"></div>
+          <button type="submit" class="auth-primary" id="authSubmit">Sign in securely</button>
+        </form>
+        <button type="button" class="auth-link" id="authForgot">Forgot password?</button>
+      </div>
+      <div class="auth-otp-view" id="authOtpView" hidden>
+        <div class="auth-field"><label for="authEmail">Email address</label><input id="authEmailOtp" type="email" inputmode="email" autocomplete="email" placeholder="name@example.com"></div>
+        <button type="button" class="auth-primary" id="authSendOtp">Send one-time code</button>
+        <div class="auth-otp-entry" hidden>
+          <p class="auth-helper">Enter the code sent to <strong id="authOtpEmail"></strong>.</p>
+          <div class="auth-field"><label for="authOtpCode" id="authOtpLabel">6-digit email code</label><input id="authOtpCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456"></div>
+          <button type="button" class="auth-primary" id="authVerifyOtp">Verify code &amp; continue</button>
+          <button type="button" class="auth-link" id="authResendOtp">Send a new code</button>
+          <button type="button" class="auth-link" id="authChangeEmail">Use a different email</button>
+        </div>
+      </div>
+      <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
+      <div class="auth-security-note"><span aria-hidden="true">🔒</span><div id="authSecurityText">Your password and authentication are handled by Supabase. Never share your password or verification code.</div></div>
+      <p class="auth-helper" id="authLocalNote">Your current farm records are still stored on this device. Cloud syncing will be the next upgrade.</p>
+    </div>
+  </div>
+</section>
+<section class="screen" id="screen-home">
   <div class="dash-head">
     <div class="dash-head-copy"><div class="eyebrow">FASALSATHI · FARM INTELLIGENCE</div><h1 data-i18n="homeTitle">Your farm, in focus.</h1><p data-i18n="homeSubtitle">A clear view of field conditions, crop health and weather-led disease risk.</p></div>
     <div class="dash-date"><svg class="icon" aria-hidden="true"><use href="#i-pin"></use></svg><span id="homeLocationTitle">No field added yet</span></div>
@@ -918,6 +959,7 @@ const SCAN_ENDPOINT_URL = SUPABASE_CONFIGURED
 const supabaseClient = SUPABASE_CONFIGURED && window.supabase?.createClient
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
   : null;
+window.fasalsathiSupabase = supabaseClient;
 
 async function callDiseaseReports(action, payload = {}) {
   if (!SUPABASE_CONFIGURED || !SCAN_ENDPOINT_URL) throw new Error('reportsBackendNotConfigured');
@@ -1146,13 +1188,13 @@ function loadSaved(){
     const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
     if(saved && saved.accounts && typeof saved.accounts==='object' && !Array.isArray(saved.accounts)) {
       db={accounts:{},lang:['en','hi','mr'].includes(saved.lang)?saved.lang:'en'};
-      for(const [phone,a] of Object.entries(saved.accounts)) {
-        if(!/^[6-9][0-9]{9}$/.test(phone)||!a||typeof a.id!=='string') continue;
+      for(const [accountKey,a] of Object.entries(saved.accounts)) {
+        if(!/^[a-zA-Z0-9_-]{1,128}$/.test(accountKey)||!a||typeof a.id!=='string') continue;
         const fields=Array.isArray(a.fields)?a.fields.filter(f=>f&&typeof f.id==='string'&&f.crop==='tomato'&&Number.isFinite(f.lat)&&Number.isFinite(f.lon)&&Math.abs(f.lat)<=90&&Math.abs(f.lon)<=180).map(f=>({...f,name:typeof f.name==='string'?f.name.slice(0,40):''})):[];
-        db.accounts[phone]={id:a.id,fields,unlinkedScans:Array.isArray(a.unlinkedScans)?a.unlinkedScans.slice(0,5):[]};
+        db.accounts[accountKey]={id:a.id,fields,unlinkedScans:Array.isArray(a.unlinkedScans)?a.unlinkedScans.slice(0,5):[]};
       }
     }
-    const phone=sessionStorage.getItem(SESSION_KEY); if(phone && db.accounts[phone]) state.user=phone;
+    // Real Supabase Auth session is restored by auth.js; never trust the old demo session as a login.
   } catch {storageAvailable=false;}
   state.lang=db.lang||'en';
 }
@@ -1168,16 +1210,16 @@ function applyLanguage(){
 }
 function setError(id,key=''){ $(id).dataset.errorKey=key;$(id).textContent=key?t(key):''; }
 function showScreen(name,replace=false){
-  if(!account()&&name!=='language')name='language';
+  if(!account()&&!['language','auth'].includes(name))name='auth';
   if(name==='done'&&(state.lat===null||state.lon===null)) name='fields';
   if(name==='field'&&!activeField()) name='fields';
   if(state.page==='scan'&&name!=='scan')cancelCropScan();
   state.page=name;
-  const pageTitles={home:'Your farm overview',fields:'My fields',field:'Field intelligence',scan:'Crop health scanner',alerts:'Alerts & forecasts',support:'Farmer support',location:'Pin your field',crop:'Crop details',done:'Field saved',language:'Choose your language'};
+  const pageTitles={home:'Your farm overview',fields:'My fields',field:'Field intelligence',scan:'Crop health scanner',alerts:'Alerts & forecasts',support:'Farmer support',location:'Pin your field',crop:'Crop details',done:'Field saved',language:'Choose your language',auth:'Farmer account'};
   if($('topbarTitle'))$('topbarTitle').textContent=pageTitles[name]||'FasalSathi';
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id==='screen-'+name));
   const signed=!!account()&&name!=='language'; document.body.classList.toggle('signed-in',signed); $('bottomNav').hidden=!signed;
-  $('languageSwitch').hidden=name==='language';
+  $('languageSwitch').hidden=name==='language'; $('signOutBtn').hidden=!signed;
   const widths={location:50,crop:100};
   $('setupProgress').hidden=!(name in widths); $('progressBar').style.width=(widths[name]||100)+'%'; $('progressTrack').setAttribute('aria-valuenow',widths[name]||100);
   document.querySelectorAll('.nav-item').forEach(b=>{const active=b.dataset.route===(['crop','location','done','field'].includes(name)?'fields':name);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
@@ -1197,7 +1239,7 @@ function openLocalWorkspace(){
   }
   try{sessionStorage.setItem(SESSION_KEY,state.user);}catch{}
 }
-document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{state.lang=b.dataset.lang;db.lang=state.lang;openLocalWorkspace();persist();applyLanguage();showScreen('home');}));
+document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{state.lang=b.dataset.lang;db.lang=state.lang;persist();applyLanguage();window.dispatchEvent(new Event('fasalsathi:language-changed'));showScreen('auth');}));
 $('languageSwitch').addEventListener('change',e=>{state.lang=e.target.value;db.lang=state.lang;persist();applyLanguage();});
 document.querySelectorAll('[data-back],[data-route]').forEach(b=>b.addEventListener('click',()=>{const route=b.dataset.back||b.dataset.route;if(route==='scan')openScanner();else showScreen(route);}));
 function renderHome(){
@@ -1564,16 +1606,28 @@ $('viewUpdatedField').addEventListener('click',()=>{if(state.scanSavedFieldId)op
 $('scanAnother').addEventListener('click',()=>{state.scanTargetFieldId=null;resetGlobalScanner();renderScanner();});
 $('forecastAlertList').addEventListener('click',e=>{const b=e.target.closest('[data-alert-field]');if(b)openFieldDashboard(b.dataset.alertField);});
 
-window.addEventListener('popstate',()=>{let route=location.hash.slice(1);if(!$('screen-'+route))route=account()?'home':'language';showScreen(route,true);});
+window.addEventListener('popstate',()=>{let route=location.hash.slice(1);if(!$('screen-'+route))route=account()?'home':'auth';showScreen(route,true);});
 function refreshVisibleForecast(){
  if(!account()||!['home','fields','alerts','field'].includes(state.page))return;
  renderForecastViews();
  for(const field of account().fields)if(!Tomcast.fresh(field.weather))refreshFieldForecast(field);
 }
 window.addEventListener('online',refreshVisibleForecast);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshVisibleForecast();});setInterval(()=>{if(!document.hidden)refreshVisibleForecast();},60000);
+window.addEventListener('fasalsathi:authenticated',event=>{
+ const user=event.detail?.user;if(!user?.id)return;
+ state.user=user.id;
+ if(!db.accounts[state.user])db.accounts[state.user]={id:newId('FS-'),fields:[],unlinkedScans:[]};
+ try{sessionStorage.setItem(SESSION_KEY,state.user);}catch{}
+ persist();applyLanguage();showScreen('home',true);
+});
+window.addEventListener('fasalsathi:signedout',()=>{
+ state.user=null;try{sessionStorage.removeItem(SESSION_KEY);}catch{}
+ showScreen('auth',true);
+});
 loadSaved();applyLanguage();showScreen('language',true);
 if(!storageAvailable)setTimeout(()=>toast(t('storageUnavailable')),100);
 
 </script>
+<script src="auth.js"></script>
 </body>
 </html>
