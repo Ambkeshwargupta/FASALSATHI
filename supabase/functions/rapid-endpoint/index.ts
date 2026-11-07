@@ -89,6 +89,23 @@ Deno.serve(async (request) => {
     return jsonResponse({ success: false, error: "invalid_app_key" }, 401, origin);
   }
 
+  // Image analysis is a farmer-only operation: require a valid Supabase user session.
+  const authorization = request.headers.get("authorization") ?? "";
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")?.replace(/\/$/, "");
+  if (!/^Bearer\s+\S+$/i.test(authorization) || !supabaseUrl) {
+    return jsonResponse({ success: false, error: "authentication_required" }, 401, origin);
+  }
+  try {
+    const authResponse = await fetch(supabaseUrl + "/auth/v1/user", {
+      headers: { apikey: expectedAppKey, Authorization: authorization },
+    });
+    if (!authResponse.ok) {
+      return jsonResponse({ success: false, error: "authentication_required" }, 401, origin);
+    }
+  } catch {
+    return jsonResponse({ success: false, error: "authentication_unavailable" }, 503, origin);
+  }
+
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   if (!checkRateLimit(forwarded)) {
     return jsonResponse({ success: false, error: "rate_limit_exceeded" }, 429, origin);
