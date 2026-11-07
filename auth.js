@@ -204,7 +204,15 @@
         }});
         if(error){
           const detail=String(error.message||'').toLowerCase();
-          if(detail.includes('already registered')||detail.includes('user already exists')||detail.includes('email address already exists')){
+          const errorCode=String(error.code||error.status||'').toLowerCase();
+          if(
+            detail.includes('already registered')||
+            detail.includes('already exists')||
+            detail.includes('user already exists')||
+            detail.includes('email address already exists')||
+            errorCode==='user_already_exists'||
+            errorCode==='409'
+          ){
             showSignupDialog('duplicate',email);
             return;
           }
