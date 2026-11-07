@@ -52,11 +52,17 @@
  }
  function validateLeafPart(result,options={}){
   const threshold=Number.isFinite(options.minConfidence)?options.minConfidence:0.60;
-  const organ=String(result?.organ||'').trim().toLowerCase();
+  const sourceOrgan=String(result?.sourceOrgan||result?.organ||'').trim().toLowerCase();
+  const normalizedOrgan=String(result?.normalizedOrgan||result?.organ||'').trim().toLowerCase();
+  // Pl@ntNet can label a scanned or scan-like leaf image as "scan".
+  // That class represents a leaf view, not a non-leaf plant organ.
+  const isLeafView=['leaf','scan'].includes(sourceOrgan)||normalizedOrgan==='leaf';
   const score=probability(result?.score);
-  if(organ==='leaf'&&score!==null&&score>=threshold)return {accepted:true,organ,score};
-  if(organ&&organ!=='unknown'&&organ!=='leaf')return {accepted:false,reason:'wrongPart',organ,score};
-  return {accepted:false,reason:'uncertain',organ:organ||'unknown',score};
+  if(isLeafView&&score!==null&&score>=threshold){
+    return {accepted:true,organ:'leaf',sourceOrgan,score};
+  }
+  if(sourceOrgan&&sourceOrgan!=='unknown'&&!isLeafView)return {accepted:false,reason:'wrongPart',organ:sourceOrgan,score};
+  return {accepted:false,reason:'uncertain',organ:sourceOrgan||'unknown',score};
  }
  return {parse,identify,validateTomato,validateLeafPart,TOMATO_VALIDATION};
 });
