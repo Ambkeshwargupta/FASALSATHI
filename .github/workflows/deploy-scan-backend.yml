@@ -17,9 +17,10 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
           CROP_HEALTH_API_KEY: ${{ secrets.CROP_HEALTH_API_KEY }}
+          PLANTNET_API_KEY: ${{ secrets.PLANTNET_API_KEY }}
         run: |
           set -euo pipefail
-          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_DB_URL CROP_HEALTH_API_KEY; do
+          for name in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_DB_URL CROP_HEALTH_API_KEY PLANTNET_API_KEY; do
             if [ -z "${!name}" ]; then
               echo "::error::Missing repository secret: $name"
               exit 1
@@ -38,6 +39,7 @@ jobs:
         run: |
           deno check supabase/functions/rapid-endpoint/index.ts
           deno check supabase/functions/disease-reports/index.ts
+          deno check supabase/functions/leaf-filter/index.ts
 
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v1
@@ -60,11 +62,13 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           CROP_HEALTH_API_KEY: ${{ secrets.CROP_HEALTH_API_KEY }}
+          PLANTNET_API_KEY: ${{ secrets.PLANTNET_API_KEY }}
         run: |
           set -euo pipefail
           SECRETS_FILE="$RUNNER_TEMP/fasalsathi-edge-secrets.env"
           umask 077
           printf 'CROP_HEALTH_API_KEY=%s\n' "$CROP_HEALTH_API_KEY" > "$SECRETS_FILE"
+          printf 'PLANTNET_API_KEY=%s\n' "$PLANTNET_API_KEY" >> "$SECRETS_FILE"
           supabase secrets set --env-file "$SECRETS_FILE" --project-ref "aaslgfnfdxhgoqwwpgnz"
           rm -f "$SECRETS_FILE"
 
@@ -77,3 +81,8 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: supabase functions deploy disease-reports --project-ref "aaslgfnfdxhgoqwwpgnz" --no-verify-jwt
+
+      - name: Deploy authenticated leaf-part preflight
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions deploy leaf-filter --project-ref "aaslgfnfdxhgoqwwpgnz" --no-verify-jwt
