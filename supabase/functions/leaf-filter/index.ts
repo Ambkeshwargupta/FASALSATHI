@@ -102,7 +102,9 @@ Deno.serve(async (request) => {
   catch { return jsonResponse({ success: false, error: "invalid_image" }, 400, origin); }
 
   const form = new FormData();
-  form.append("images", new Blob([bytes], { type: "image/jpeg" }), "fasalsathi-leaf-check.jpg");
+  const imageBuffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(imageBuffer).set(bytes);
+  form.append("images", new Blob([imageBuffer], { type: "image/jpeg" }), "fasalsathi-leaf-check.jpg");
   form.append("organs", "auto");
 
   const url = new URL("https://my-api.plantnet.org/v2/identify/all");
