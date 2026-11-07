@@ -23,14 +23,14 @@
   const top=diseases[0]||null;
   return {crops,diseases,healthy:!!top&&/^healthy(?:\s+plant)?$/i.test(top.name.trim())};
  }
- async function identify(image,{url,key,signal,fetcher=globalThis.fetch,timeoutMs=60000}={}){
+ async function identify(image,{url,key,authorization,signal,fetcher=globalThis.fetch,timeoutMs=60000}={}){
   const base64=String(image||'').replace(/^data:image\/[a-z0-9.+-]+;base64,/i,'');
   if(!base64||!/^[A-Za-z0-9+/]+={0,2}$/.test(base64))throw new Error('invalidImage');
   const controller=new AbortController();let timedOut=false;
   const cancel=()=>controller.abort();if(signal?.aborted)cancel();signal?.addEventListener('abort',cancel,{once:true});
   const timer=setTimeout(()=>{timedOut=true;controller.abort();},timeoutMs);
   try{
-   const response=await fetcher(url,{method:'POST',headers:{'Content-Type':'application/json',...(key?{apikey:key}:{} )},body:JSON.stringify({image:base64}),signal:controller.signal});
+   const response=await fetcher(url,{method:'POST',headers:{'Content-Type':'application/json',...(key?{apikey:key}:{}),...(authorization?{authorization}:{})},body:JSON.stringify({image:base64}),signal:controller.signal});
    if(!response.ok)throw new Error(response.status===401||response.status===403?'scanAuthError':response.status===429?'scanLimitError':'scanServiceError');
    let data;try{data=await response.json();}catch{throw new Error('scanInvalidResponse');}
    return parse(data);
@@ -50,5 +50,13 @@
   if(isTomato(registeredCrop))return {accepted:true,fallback:true};
   return {accepted:false,reason:'uncertain'};
  }
- return {parse,identify,validateTomato,TOMATO_VALIDATION};
+ function validateLeafPart(result,options={}){
+  const threshold=Number.isFinite(options.minConfidence)?options.minConfidence:0.60;
+  const organ=String(result?.organ||'').trim().toLowerCase();
+  const score=probability(result?.score);
+  if(organ==='leaf'&&score!==null&&score>=threshold)return {accepted:true,organ,score};
+  if(organ&&organ!=='unknown'&&organ!=='leaf')return {accepted:false,reason:'wrongPart',organ,score};
+  return {accepted:false,reason:'uncertain',organ:organ||'unknown',score};
+ }
+ return {parse,identify,validateTomato,validateLeafPart,TOMATO_VALIDATION};
 });
