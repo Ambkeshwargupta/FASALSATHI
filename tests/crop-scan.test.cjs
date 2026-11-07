@@ -25,7 +25,7 @@ test('tomato-only cases A–D and threshold boundaries',()=>{
 });
 
 test('leaf-part preflight accepts only a confidently classified leaf',()=>{
- assert.deepEqual(scan.validateLeafPart({accepted:true,organ:'leaf',score:.91}),{accepted:true,organ:'leaf',score:.91});
+ assert.deepEqual(scan.validateLeafPart({accepted:true,organ:'leaf',score:.91}),{accepted:true,organ:'leaf',sourceOrgan:'leaf',score:.91});
  assert.equal(scan.validateLeafPart({organ:'fruit',score:.94}).reason,'wrongPart');
  assert.equal(scan.validateLeafPart({organ:'flower',score:.82}).reason,'wrongPart');
  assert.equal(scan.validateLeafPart({organ:'not_plant',score:null}).reason,'wrongPart');
