@@ -15,7 +15,8 @@
       signInTab:'Sign in',createTab:'Create account',name:'Full name',email:'Email address',pass:'Password',
       confirmPass:'Confirm password',passwordHint:'Use at least 8 characters.',confirmHint:'Enter the same password again.',
       show:'Show',hide:'Hide',submitLogin:'Sign in securely',submitSignup:'Create my account',forgot:'Forgot password?',
-      confirm:'Account created successfully! We sent a confirmation link to your email. Please verify your email, then sign in below with the same email and password.',
+      confirm:'Your account has been created. We sent a confirmation link to {email}. Open that link to verify your email, then return here to sign in.',
+      signupDialogTitle:'Account created successfully',signupDialogOk:'OK',duplicateTitle:'Account already exists',duplicateMessage:'An account with {email} is already registered. Please sign in instead, or use Forgot password if you cannot remember your password.',
       resetSent:'If an account exists for this email, a password reset message will be sent. Check your inbox and spam folder.',
       note:'Your password is securely handled by Supabase. Never share your password or one-time links with anyone.',
       local:'Cloud synchronization for field records is being prepared. Your current records remain on this device.',
@@ -44,7 +45,8 @@
       signInTab:'लॉगिन',createTab:'खाता बनाएँ',name:'पूरा नाम',email:'ईमेल पता',pass:'पासवर्ड',
       confirmPass:'पासवर्ड की पुष्टि करें',passwordHint:'कम से कम 8 अक्षरों का पासवर्ड रखें।',confirmHint:'वही पासवर्ड दोबारा डालें।',
       show:'दिखाएँ',hide:'छिपाएँ',submitLogin:'सुरक्षित लॉगिन करें',submitSignup:'मेरा खाता बनाएँ',forgot:'पासवर्ड भूल गए?',
-      confirm:'आपका खाता सफलतापूर्वक बन गया है! ईमेल पर भेजे गए पुष्टि लिंक को खोलकर पता सत्यापित करें। फिर नीचे उसी ईमेल और पासवर्ड से लॉगिन करें।',
+      confirm:'आपका खाता बन गया है। हमने {email} पर पुष्टि लिंक भेजा है। ईमेल सत्यापित करने के लिए लिंक खोलें, फिर यहाँ लॉगिन करें।',
+      signupDialogTitle:'खाता सफलतापूर्वक बन गया',signupDialogOk:'ठीक है',duplicateTitle:'यह ईमेल पहले से पंजीकृत है',duplicateMessage:'{email} से एक खाता पहले से मौजूद है। कृपया लॉगिन करें या पासवर्ड याद न होने पर पासवर्ड भूल गए विकल्प चुनें।'
       resetSent:'यदि इस ईमेल पर खाता मौजूद है, तो पासवर्ड रीसेट संदेश भेजा जाएगा। इनबॉक्स और स्पैम फ़ोल्डर देखें।',
       note:'आपका पासवर्ड Supabase सुरक्षित रखता है। अपना पासवर्ड या लॉगिन लिंक किसी से साझा न करें।',
       local:'खेत के रिकॉर्ड का क्लाउड सिंक तैयार किया जा रहा है। आपका मौजूदा रिकॉर्ड इसी डिवाइस पर रहेगा।',
@@ -73,7 +75,8 @@
       signInTab:'लॉगिन',createTab:'खाते तयार करा',name:'पूर्ण नाव',email:'ईमेल पत्ता',pass:'पासवर्ड',
       confirmPass:'पासवर्डची पुष्टी करा',passwordHint:'किमान 8 अक्षरांचा पासवर्ड वापरा.',confirmHint:'तोच पासवर्ड पुन्हा टाका.',
       show:'दाखवा',hide:'लपवा',submitLogin:'सुरक्षित लॉगिन करा',submitSignup:'माझे खाते तयार करा',forgot:'पासवर्ड विसरलात?',
-      confirm:'तुमचे खाते यशस्वीपणे तयार झाले आहे! ईमेलवर आलेली पुष्टी लिंक उघडून पत्ता सत्यापित करा. त्यानंतर खाली त्याच ईमेल आणि पासवर्डने लॉगिन करा.',
+      confirm:'तुमचे खाते तयार झाले आहे. आम्ही {email} वर पुष्टी लिंक पाठवली आहे. ईमेल सत्यापित करण्यासाठी लिंक उघडा आणि नंतर येथे लॉगिन करा.',
+      signupDialogTitle:'खाते यशस्वीपणे तयार झाले',signupDialogOk:'ठीक आहे',duplicateTitle:'हे ईमेल आधीपासून नोंदणीकृत आहे',duplicateMessage:'{email} या ईमेलवर खाते आधीपासून आहे. कृपया लॉगिन करा किंवा पासवर्ड आठवत नसल्यास पासवर्ड विसरलात हा पर्याय वापरा.'
       resetSent:'या ईमेलवर खाते असल्यास पासवर्ड रीसेट संदेश पाठवला जाईल. इनबॉक्स आणि स्पॅम फोल्डर तपासा.',
       note:'तुमचा पासवर्ड Supabase सुरक्षित ठेवते. पासवर्ड किंवा लॉगिन लिंक कोणाशीही शेअर करू नका.',
       local:'शेत नोंदींचे क्लाउड सिंक तयार केले जात आहे. सध्याच्या नोंदी या डिव्हाइसवरच राहतील.',
@@ -98,6 +101,33 @@
     node.textContent=text||'';node.classList.toggle('error',!!error);
     node.setAttribute('role',error?'alert':'status');
   };
+  function showSignupDialog(kind,email){
+    const existing=$('authResultDialog');
+    if(existing)existing.remove();
+    const dialog=document.createElement('dialog');
+    dialog.id='authResultDialog';
+    dialog.className='auth-result-dialog';
+    dialog.setAttribute('aria-labelledby','authResultTitle');
+    dialog.setAttribute('aria-describedby','authResultText');
+    const card=document.createElement('div');card.className='auth-result-card';
+    const icon=document.createElement('div');icon.className='auth-result-icon '+(kind==='duplicate'?'is-error':'is-success');
+    icon.setAttribute('aria-hidden','true');icon.textContent=kind==='duplicate'?'!':'✓';
+    const title=document.createElement('h2');title.id='authResultTitle';
+    title.textContent=tr(kind==='duplicate'?'duplicateTitle':'signupDialogTitle');
+    const body=document.createElement('p');body.id='authResultText';
+    body.textContent=tr(kind==='duplicate'?'duplicateMessage':'confirm').replaceAll('{email}',email);
+    const button=document.createElement('button');button.type='button';button.className='auth-result-ok';button.textContent=tr('signupDialogOk');
+    button.addEventListener('click',()=>{
+      dialog.close();
+      setIntent('login');
+      $('authEmail').value=email;
+      $('authPassword').focus();
+    });
+    dialog.addEventListener('cancel',()=>{setIntent('login');$('authEmail').value=email;});
+    card.append(icon,title,body,button);dialog.append(card);document.body.append(dialog);
+    if(typeof dialog.showModal==='function')dialog.showModal();
+    else {dialog.setAttribute('open','');button.focus();}
+  }
   const fire=(name,detail={})=>window.dispatchEvent(new CustomEvent(name,{detail}));
   const validEmail=(email)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const setBusy=(value)=>{
@@ -172,17 +202,29 @@
           data:{full_name:fullName},
           emailRedirectTo:window.location.origin+window.location.pathname
         }});
-        if(error)throw error;
-        if(data.session&&data.user){
-          lastHandledUserId=data.user.id;fire('fasalsathi:authenticated',{user:data.user});
-          msg(tr('loginSuccess'));
-        }else{
-          // Email confirmation is required: show the login form immediately,
-          // keep the farmer's email, and ask them to verify before signing in.
-          setIntent('login');
-          msg(tr('confirm'));
-          $('authPassword').focus();
+        if(error){
+          const detail=String(error.message||'').toLowerCase();
+          if(detail.includes('already registered')||detail.includes('user already exists')||detail.includes('email address already exists')){
+            showSignupDialog('duplicate',email);
+            return;
+          }
+          throw error;
         }
+        // Supabase intentionally returns an obfuscated user with an empty
+        // identities array for an existing confirmed email when confirmations
+        // are enabled. Never tell the farmer that a new account was created.
+        if(data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){
+          showSignupDialog('duplicate',email);
+          return;
+        }
+        if(!data.user)throw new Error('network');
+        // Registration must finish with a clear OK step and then return to sign-in.
+        // If Supabase auto-created a session, clear it so registration never skips sign-in.
+        if(data.session){
+          const {error:signOutError}=await client.auth.signOut({scope:'local'});
+          if(signOutError)throw signOutError;
+        }
+        showSignupDialog('success',email);
       }else{
         const {data,error}=await client.auth.signInWithPassword({email,password});
         if(error)throw error;
