@@ -32,4 +32,7 @@ test('leaf-part preflight accepts only a confidently classified leaf',()=>{
  assert.equal(scan.validateLeafPart({organ:'leaf',score:.59}).reason,'uncertain');
  assert.equal(scan.validateLeafPart({organ:'unknown',score:null}).reason,'uncertain');
  assert.equal(scan.validateLeafPart({organ:'leaf',score:.6}).accepted,true);
+ assert.deepEqual(scan.validateLeafPart({organ:'scan',score:.94}),{accepted:true,organ:'leaf',sourceOrgan:'scan',score:.94});
+ assert.equal(scan.validateLeafPart({organ:'scan',score:.59}).reason,'uncertain');
+ assert.equal(scan.validateLeafPart({organ:'scan',score:.6}).accepted,true);
 });
