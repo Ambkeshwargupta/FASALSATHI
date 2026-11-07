@@ -7,6 +7,7 @@ A tomato-focused crop assistant with photo assessments, location-based disease w
 ## Features
 
 - **Tomato photo scanner:** the upload, preview, validation and result UI are included. Live Crop.health analysis requires a dedicated Supabase project and server-side Kindwise key; follow [BACKEND_SETUP.md](BACKEND_SETUP.md) before using live scans.
+- **Leaf-only preflight:** an authenticated Supabase Edge Function uses Pl@ntNet automatic organ detection to distinguish leaves from fruits, flowers and non-plant images before the credit-based Crop.health request. A leaf score of at least 0.60 is required. The current Pl@ntNet free plan allows 500 requests/day; if its quota is unavailable, scanning stops rather than bypassing the filter.
 - **Tomato-only validation:** confident non-tomato predictions are rejected. Uncertain crop identification can fall back to a registered Tomato field when the issue result is usable. Rejected scans offer clearer-photo guidance and cannot be saved or submitted through the app's reporting flow.
 - **Weather-based disease risk:** Open-Meteo hourly forecasts feed the TOMCAST calculation for early blight, Septoria leaf spot and anthracnose. Farmers see Low, Moderate, High or Very high rather than raw scores. Today and the next five days are shown separately; stale or incomplete data is not presented as low risk.
 - **Field records:** automatic location permission request, map pin adjustment, crop details and saved photo assessments. Language selection opens the homepage directly, with no login screen.
@@ -21,10 +22,11 @@ The frontend is a static HTML/CSS/JavaScript app hosted on GitHub Pages. There i
 | --- | --- |
 | Browser | Interface, field records, photo previews and saved assessments |
 | Open-Meteo + `tomcast.js` | Hourly weather retrieval and local weather-risk calculations |
-| Supabase Edge Function | Securely calls Kindwise Crop.health for image analysis |
+| Supabase `leaf-filter` Edge Function | Authenticates the farmer and checks the image's plant part with Pl@ntNet before Crop.health |
+| Supabase `rapid-endpoint` Edge Function | Requires a farmer session and calls Kindwise Crop.health for image analysis |
 | Supabase `disease_reports` | Receives eligible saved field reports and supplies nearby alerts |
 
-The browser sends `POST { "image": "<base64 image>" }` to the configured `rapid-endpoint` function with the Supabase publishable key in the `apikey` header. The Kindwise API key stays in the Edge Function's server-side secrets. It must never be added to this repository or browser code.
+The browser first sends `POST { "image": "<base64 image>" }` to `leaf-filter` with the Supabase publishable key and farmer access token. The Edge Function calls Pl@ntNet with automatic organ detection and blocks the image unless the predicted part is a leaf with sufficient score. Only then does the browser send the image to `rapid-endpoint`, again with a valid farmer access token. The Pl@ntNet and Kindwise API keys stay in Edge Function secrets; neither is exposed in browser code.
 
 The image is sent for analysis when the user selects **Check photo**. Saving an accepted disease assessment to a field can submit a community report through the `disease-reports` Edge Function, including field ID, issue, coordinates and confidence. Field records and photo assessments themselves are stored in the current browser; clearing site data can remove them. Direct browser access to the reports table is denied by Row Level Security.
 
@@ -42,7 +44,7 @@ Open `http://localhost:8080`. Internet access is needed for weather, map tiles, 
 
 ### Service configuration
 
-`supabaseUrl` and `supabasePublishableKey` are configured in `app-config.js`. The browser calls `rapid-endpoint` for crop scans and `disease-reports` for nearby reports. This repository includes both Edge Function sources, a private database migration, and a GitHub Actions deployment workflow. See [BACKEND_SETUP.md](BACKEND_SETUP.md).
+`supabaseUrl` and `supabasePublishableKey` are configured in `app-config.js`. The browser calls `leaf-filter` before `rapid-endpoint` for crop scans, and `disease-reports` for nearby reports. This repository includes both Edge Function sources, a private database migration, and a GitHub Actions deployment workflow. See [BACKEND_SETUP.md](BACKEND_SETUP.md).
 
 This repository is a separate deployment and uses its own Supabase project. The scanner's Edge Function source and the `disease_reports` migration are included. The Kindwise key must be stored as a Supabase Edge Function secret. The reports table has RLS enabled and no direct `anon`/`authenticated` table grants; the server-side `disease-reports` function mediates report submissions and nearby reads.
 
