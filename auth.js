@@ -15,7 +15,7 @@
       signInTab:'Sign in',createTab:'Create account',name:'Full name',email:'Email address',pass:'Password',
       confirmPass:'Confirm password',passwordHint:'Use at least 8 characters.',confirmHint:'Enter the same password again.',
       show:'Show',hide:'Hide',submitLogin:'Sign in securely',submitSignup:'Create my account',forgot:'Forgot password?',
-      confirm:'Your account has been created. Check your inbox and spam folder for the confirmation email, then return here to sign in.',
+      confirm:'Account created successfully! We sent a confirmation link to your email. Please verify your email, then sign in below with the same email and password.',
       resetSent:'If an account exists for this email, a password reset message will be sent. Check your inbox and spam folder.',
       note:'Your password is securely handled by Supabase. Never share your password or one-time links with anyone.',
       local:'Cloud synchronization for field records is being prepared. Your current records remain on this device.',
@@ -44,7 +44,7 @@
       signInTab:'लॉगिन',createTab:'खाता बनाएँ',name:'पूरा नाम',email:'ईमेल पता',pass:'पासवर्ड',
       confirmPass:'पासवर्ड की पुष्टि करें',passwordHint:'कम से कम 8 अक्षरों का पासवर्ड रखें।',confirmHint:'वही पासवर्ड दोबारा डालें।',
       show:'दिखाएँ',hide:'छिपाएँ',submitLogin:'सुरक्षित लॉगिन करें',submitSignup:'मेरा खाता बनाएँ',forgot:'पासवर्ड भूल गए?',
-      confirm:'आपका खाता बन गया है। ईमेल पुष्टि संदेश के लिए इनबॉक्स और स्पैम फ़ोल्डर देखें, फिर यहाँ लॉगिन करें।',
+      confirm:'आपका खाता सफलतापूर्वक बन गया है! ईमेल पर भेजे गए पुष्टि लिंक को खोलकर पता सत्यापित करें। फिर नीचे उसी ईमेल और पासवर्ड से लॉगिन करें।',
       resetSent:'यदि इस ईमेल पर खाता मौजूद है, तो पासवर्ड रीसेट संदेश भेजा जाएगा। इनबॉक्स और स्पैम फ़ोल्डर देखें।',
       note:'आपका पासवर्ड Supabase सुरक्षित रखता है। अपना पासवर्ड या लॉगिन लिंक किसी से साझा न करें।',
       local:'खेत के रिकॉर्ड का क्लाउड सिंक तैयार किया जा रहा है। आपका मौजूदा रिकॉर्ड इसी डिवाइस पर रहेगा।',
@@ -73,7 +73,7 @@
       signInTab:'लॉगिन',createTab:'खाते तयार करा',name:'पूर्ण नाव',email:'ईमेल पत्ता',pass:'पासवर्ड',
       confirmPass:'पासवर्डची पुष्टी करा',passwordHint:'किमान 8 अक्षरांचा पासवर्ड वापरा.',confirmHint:'तोच पासवर्ड पुन्हा टाका.',
       show:'दाखवा',hide:'लपवा',submitLogin:'सुरक्षित लॉगिन करा',submitSignup:'माझे खाते तयार करा',forgot:'पासवर्ड विसरलात?',
-      confirm:'तुमचे खाते तयार झाले आहे. ईमेल पुष्टीसाठी इनबॉक्स आणि स्पॅम फोल्डर तपासा, नंतर येथे लॉगिन करा.',
+      confirm:'तुमचे खाते यशस्वीपणे तयार झाले आहे! ईमेलवर आलेली पुष्टी लिंक उघडून पत्ता सत्यापित करा. त्यानंतर खाली त्याच ईमेल आणि पासवर्डने लॉगिन करा.',
       resetSent:'या ईमेलवर खाते असल्यास पासवर्ड रीसेट संदेश पाठवला जाईल. इनबॉक्स आणि स्पॅम फोल्डर तपासा.',
       note:'तुमचा पासवर्ड Supabase सुरक्षित ठेवते. पासवर्ड किंवा लॉगिन लिंक कोणाशीही शेअर करू नका.',
       local:'शेत नोंदींचे क्लाउड सिंक तयार केले जात आहे. सध्याच्या नोंदी या डिव्हाइसवरच राहतील.',
@@ -177,7 +177,11 @@
           lastHandledUserId=data.user.id;fire('fasalsathi:authenticated',{user:data.user});
           msg(tr('loginSuccess'));
         }else{
+          // Email confirmation is required: show the login form immediately,
+          // keep the farmer's email, and ask them to verify before signing in.
+          setIntent('login');
           msg(tr('confirm'));
+          $('authPassword').focus();
         }
       }else{
         const {data,error}=await client.auth.signInWithPassword({email,password});
