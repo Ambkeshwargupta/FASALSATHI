@@ -1037,7 +1037,7 @@
           <p id="globalScanError" class="error-text" role="alert"></p><button type="button" class="btn btn-primary full" id="runGlobalScan" disabled data-i18n="analysePhoto">Analyze photo (demo)</button>
           <p id="scanLoading" class="small" role="status" aria-live="polite" hidden data-i18n="scanLoading">Checking your photo…</p>
           <div id="scanValidationMessage" class="notice" role="status" hidden><h3 id="scanValidationTitle"></h3><p id="scanValidationHint"></p><button type="button" id="retryTomatoPhoto" class="btn btn-secondary" data-i18n="scanAnotherPhoto">Scan another photo</button></div>
-          <div id="globalScanResult" class="scan-result" hidden aria-live="polite"><span class="sample-pill" data-i18n="scanResultLabel">Photo assessment</span><h2 id="scanResultTitle">—</h2><div class="scan-result-grid"><div><small data-i18n="scanConfidence">Match confidence</small><strong id="scanResultConfidence">—</strong></div><div><small data-i18n="scanCrop">Likely crop</small><strong id="scanResultCrop">—</strong></div></div><p id="scanCropFallbackNote" class="small" hidden data-i18n="scanCropFallback"></p><div id="scanResultDetails"></div><p class="small" data-i18n="scanDisclaimer"></p></div>
+          <div id="globalScanResult" class="scan-result" hidden aria-live="polite"><span class="sample-pill" data-i18n="scanResultLabel">Photo assessment</span><h2 id="scanResultTitle">—</h2><div class="scan-result-grid"><div><small data-i18n="scanConfidence">Match confidence</small><strong id="scanResultConfidence">—</strong></div><div><small data-i18n="scanCrop">Likely crop</small><strong id="scanResultCrop">—</strong></div></div><p id="scanCropFallbackNote" class="small" hidden data-i18n="scanCropFallback"></p><p id="scanLeafCheckNote" class="small scan-leaf-note" hidden></p><div id="scanResultDetails"></div><p class="small" data-i18n="scanDisclaimer"></p></div>
           <div id="scanLinkPanel" class="scan-link-card" hidden><h3 data-i18n="saveScanTo">Save this scan to</h3><p class="small" id="scanFieldSuggestion"></p><label for="scanFieldSelect" data-i18n="chooseFieldLabel">Choose or confirm field</label><select id="scanFieldSelect"></select><button type="button" class="btn btn-primary full" id="saveGlobalScan" data-i18n="saveScan">Save scan</button></div>
           <div id="scanSavedPanel" class="combined-card" hidden><div class="eyebrow" data-i18n="savedLabel">SAVED</div><h2 id="scanSavedTitle">—</h2><p id="scanSavedText"></p><div class="actions"><button type="button" class="btn btn-primary" id="viewUpdatedField" data-i18n="viewUpdatedField">View updated field</button><button type="button" class="btn btn-secondary" id="scanAnother" data-i18n="scanAnother">Scan another</button></div></div>
         </section>
@@ -1075,6 +1075,24 @@ const supabaseClient = SUPABASE_CONFIGURED && window.supabase?.createClient
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
   : null;
 window.fasalsathiSupabase = supabaseClient;
+
+async function callLeafFilter(image,signal){
+  if(!SUPABASE_CONFIGURED||!supabaseClient)throw new Error('leaf_filter_not_configured');
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error)throw new Error('scanAuthError');
+  const accessToken=data?.session?.access_token;
+  if(!accessToken)throw new Error('scanAuthError');
+  const response=await fetch(SUPABASE_URL+'/functions/v1/leaf-filter',{
+    method:'POST',
+    headers:{'Content-Type':'application/json',apikey:SUPABASE_PUBLISHABLE_KEY,Authorization:'Bearer '+accessToken},
+    body:JSON.stringify({image}),
+    signal
+  });
+  let result;
+  try{result=await response.json();}catch{throw new Error('leaf_filter_invalid_response');}
+  if(!response.ok||result?.error)throw new Error(result?.error||'leaf_filter_upstream_error');
+  return {result,accessToken};
+}
 
 async function callDiseaseReports(action, payload = {}) {
   if (!SUPABASE_CONFIGURED || !SCAN_ENDPOINT_URL) throw new Error('reportsBackendNotConfigured');
@@ -1680,6 +1698,16 @@ function rejectTomatoScan(reason){
  $('scanValidationTitle').dataset.i18n=title;$('scanValidationTitle').textContent=t(title);
  $('scanValidationHint').dataset.i18n=hint;$('scanValidationHint').textContent=t(hint);$('scanValidationMessage').hidden=false;
 }
+function rejectLeafPhoto(reason,check){
+ state.pendingScan=null;$('globalScanResult').hidden=true;$('scanLinkPanel').hidden=true;
+ $('scanResultTitle').textContent='';$('scanResultConfidence').textContent='';$('scanResultCrop').textContent='';$('scanResultDetails').replaceChildren();
+ const title=reason==='wrongPart'?'scanNotLeafTitle':'scanUncertainLeafTitle';
+ const hint=reason==='wrongPart'?'scanNotLeafHint':'scanUncertainLeafHint';
+ $('scanValidationTitle').dataset.i18n=title;$('scanValidationTitle').textContent=t(title);
+ $('scanValidationHint').dataset.i18n=hint;$('scanValidationHint').textContent=t(hint);
+ $('scanValidationMessage').hidden=false;
+ if(check?.organ)$('scanValidationHint').textContent+=' ('+String(check.organ)+')';
+}
 $('retryTomatoPhoto').addEventListener('click',()=>{resetGlobalScanner();renderScanner();$('globalScanInput').click();});
 $('scanFieldSelect').addEventListener('change',()=>{
  state.scanTargetFieldId=$('scanFieldSelect').value||null;
@@ -1694,6 +1722,7 @@ function renderCropAssessment(assessment){
  $('scanResultConfidence').textContent=scanProbability(top?.probability);
  $('scanResultCrop').textContent=crop.label;
  $('scanCropFallbackNote').hidden=!crop.fallback;
+ const leaf=state.pendingScan?.leafCheck;$('scanLeafCheckNote').hidden=!leaf;$('scanLeafCheckNote').textContent=leaf?t('scanLeafPassed',{score:Math.round(leaf.score*100)}):'';
  const sections=[['scanSymptoms',top?.symptoms],['scanSeverity',top?.severity],['scanTreatment',top?.treatment]];
  $('scanResultDetails').innerHTML=sections.map(([key,value])=>'<details class="optional-card"><summary>'+escapeHtml(t(key))+'</summary><p class="small" style="white-space:pre-wrap;overflow-wrap:anywhere">'+escapeHtml(value||t('scanDetailMissing'))+'</p></details>').join('')+
   '<details class="optional-card"><summary>'+escapeHtml(t('scanAlternatives'))+'</summary>'+assessment.diseases.slice(1).map(d=>'<p>'+escapeHtml(d.name+' · '+scanProbability(d.probability))+'</p>').join('')+(assessment.diseases.length<2?'<p class="small">'+escapeHtml(t('scanDetailMissing'))+'</p>':'')+'</details>';
@@ -1702,16 +1731,33 @@ $('runGlobalScan').addEventListener('click',async()=>{
  if(!state.scanFileName||!state.scanPreviewData||scanController)return;
  if(!SUPABASE_CONFIGURED){setError('globalScanError','scanBackendSetup');return;}
  const controller=new AbortController(),request=scanReadRequest,preview=state.scanPreviewData,fileName=state.scanFileName;scanController=controller;
- state.pendingScan=null;$('scanValidationMessage').hidden=true;setError('globalScanError');$('globalScanResult').hidden=true;$('scanLinkPanel').hidden=true;$('scanSavedPanel').hidden=true;$('scanLoading').hidden=false;$('runGlobalScan').disabled=true;$('runGlobalScan').setAttribute('aria-busy','true');
+ state.pendingScan=null;$('scanValidationMessage').hidden=true;setError('globalScanError');$('globalScanResult').hidden=true;$('scanLinkPanel').hidden=true;$('scanSavedPanel').hidden=true;$('scanLoading').textContent=t('scanCheckingLeaf');$('scanLoading').hidden=false;$('runGlobalScan').disabled=true;$('runGlobalScan').setAttribute('aria-busy','true');
  try{
-  const assessment=await CropScan.identify(preview,{url:SCAN_ENDPOINT_URL,key:SUPABASE_PUBLISHABLE_KEY,signal:controller.signal});
+  $('scanLoading').textContent=t('scanCheckingLeaf');
+  const {result:leafCheck,accessToken}=await callLeafFilter(preview,controller.signal);
+  if(controller!==scanController||request!==scanReadRequest||state.page!=='scan')return;
+  const partValidation=CropScan.validateLeafPart(leafCheck);
+  if(!partValidation.accepted){rejectLeafPhoto(partValidation.reason,leafCheck);return;}
+  $('scanLoading').textContent=t('scanAnalyzingCrop');
+  const assessment=await CropScan.identify(preview,{url:SCAN_ENDPOINT_URL,key:SUPABASE_PUBLISHABLE_KEY,authorization:'Bearer '+accessToken,signal:controller.signal});
   if(controller!==scanController||request!==scanReadRequest||state.page!=='scan')return;
   const validation=CropScan.validateTomato(assessment,selectedScanField()?.crop);
   if(!validation.accepted){rejectTomatoScan(validation.reason);return;}
   const top=assessment.diseases[0];
-  state.pendingScan={id:newId('PHOTO-'),at:Date.now(),fileName,result:top?.name||'unassessed',confidence:top?.probability==null?null:top.probability*100,provider:'crop.health',assessment,previewData:preview};
+  state.pendingScan={id:newId('PHOTO-'),at:Date.now(),fileName,result:top?.name||'unassessed',confidence:top?.probability==null?null:top.probability*100,provider:'crop.health',leafCheck:{organ:partValidation.organ,score:partValidation.score,modelVersion:leafCheck.modelVersion||null},assessment,previewData:preview};
   renderCropAssessment(assessment);$('globalScanResult').hidden=false;$('scanLinkPanel').hidden=false;scannerFieldOptions();setScanStep(3);$('globalScanResult').scrollIntoView?.({behavior:'smooth',block:'start'});
- }catch(error){if(controller===scanController&&request===scanReadRequest&&error.message!=='scanCancelled'){if(['scanNoMatch','scanNotPlant'].includes(error.message))rejectTomatoScan('uncertain');else setError('globalScanError',translations.en[error.message]?error.message:'scanServiceError');}}
+ }catch(error){
+  if(controller===scanController&&request===scanReadRequest&&error.message!=='scanCancelled'){
+   const errors={
+    leaf_filter_not_configured:'leafFilterSetup',leaf_filter_quota_exceeded:'leafFilterQuota',
+    leaf_filter_timeout:'leafFilterTimeout',leaf_filter_connection_failed:'leafFilterUnavailable',
+    leaf_filter_upstream_error:'leafFilterUnavailable',leaf_filter_invalid_response:'leafFilterUnavailable',
+    authentication_required:'scanAuthError',authentication_unavailable:'leafFilterUnavailable'
+   };
+   if(['scanNoMatch','scanNotPlant'].includes(error.message))rejectTomatoScan('uncertain');
+   else setError('globalScanError',errors[error.message]|| (translations.en[error.message]?error.message:'scanServiceError'));
+  }
+ }
  finally{if(controller===scanController)cancelCropScan();}
 });
 $('saveGlobalScan').addEventListener('click',()=>{if(!state.pendingScan)return;const savedScan=state.pendingScan,value=$('scanFieldSelect').value,fields=account().fields;let field=fields.find(f=>f.id===value);const validation=CropScan.validateTomato(savedScan.assessment,field?.crop);if(!validation.accepted){rejectTomatoScan(validation.reason);return;}const oldScans=field?.scanHistory,oldUnlinked=account().unlinkedScans;if(field){field.scanHistory=[savedScan,...(Array.isArray(field.scanHistory)?field.scanHistory:[])].slice(0,5);state.scanSavedFieldId=field.id;const i=fields.indexOf(field),name=fieldLabel(field,i);$('scanSavedTitle').textContent=t('savedToField',{field:name});$('scanSavedText').textContent=t('savedToFieldText');$('viewUpdatedField').hidden=false;}else{account().unlinkedScans=[savedScan,...(Array.isArray(account().unlinkedScans)?account().unlinkedScans:[])].slice(0,5);state.scanSavedFieldId=null;$('scanSavedTitle').textContent=t('savedUnlinked');$('scanSavedText').textContent=t('savedUnlinkedText');$('viewUpdatedField').hidden=true;}if(!persist()){if(field)field.scanHistory=oldScans;else account().unlinkedScans=oldUnlinked;setError('globalScanError','storageUnavailable');return;}if(field&&savedScan.assessment?.diseases.length&&!savedScan.assessment.healthy)saveDiseaseReportToCloud(field,savedScan).then(()=>{outbreakCache.at=0;outbreakCache.reports=null;if(state.page==='alerts')loadNearbyOutbreaks();}).catch(error=>console.warn('Supabase disease report save failed:',error));state.pendingScan=null;renderFields();$('scanLinkPanel').hidden=true;$('scanSavedPanel').hidden=false;setScanStep(4);toast(field?t('fieldUpdated'):t('scanSaved'));});
@@ -1839,6 +1885,9 @@ Object.assign(translations.mr,{"navAbout":"आमच्याबद्दल","p
 Object.assign(translations.en,{"aboutCropApiKicker":"AI IMAGE ASSESSMENT","aboutWeatherKicker":"WEATHER DATA","aboutTomcastKicker":"DISEASE WEATHER MODEL","aboutMapKicker":"FIELD LOCATION","aboutBackendKicker":"BACKEND & DATA","aboutDeliveryKicker":"APPLICATION DELIVERY","aboutAccuracyCaveat":"These are figures published by Kindwise for its Crop.health service. They are not an independent FASALSATHI test, not a tomato-only or India-specific benchmark, and not a guarantee that an individual photo will be identified correctly. FASALSATHI has not independently measured its own diagnostic accuracy. The provider does not publish a separate universal “authenticity score” for each prediction; these numbers are benchmark metrics only. Weather forecasts also do not have one fixed accuracy percentage for every location and forecast horizon."});
 Object.assign(translations.hi,{"aboutCropApiKicker":"AI फोटो आकलन","aboutWeatherKicker":"मौसम डेटा","aboutTomcastKicker":"रोग मौसम मॉडल","aboutMapKicker":"खेत का स्थान","aboutBackendKicker":"बैकएंड और डेटा","aboutDeliveryKicker":"ऐप का प्रकाशन","aboutAccuracyCaveat":"ये Crop.health सेवा के लिए Kindwise द्वारा प्रकाशित आँकड़े हैं। ये FASALSATHI का स्वतंत्र परीक्षण नहीं हैं, न ही केवल टमाटर या भारत-विशेष का बेंचमार्क हैं। ये किसी एक फोटो की सही पहचान की गारंटी नहीं देते। FASALSATHI ने अपनी स्वतंत्र निदान सटीकता अभी मापी नहीं है। प्रदाता प्रत्येक परिणाम के लिए अलग सार्वभौमिक “प्रामाणिकता स्कोर” प्रकाशित नहीं करता; ये केवल मॉडल बेंचमार्क हैं। मौसम पूर्वानुमान की भी हर स्थान और अवधि के लिए एक निश्चित सटीकता प्रतिशत नहीं होता।"});
 Object.assign(translations.mr,{"aboutCropApiKicker":"AI फोटो मूल्यांकन","aboutWeatherKicker":"हवामान डेटा","aboutTomcastKicker":"रोग हवामान मॉडेल","aboutMapKicker":"शेताचे स्थान","aboutBackendKicker":"बॅकएंड आणि डेटा","aboutDeliveryKicker":"अॅप तैनाती","aboutAccuracyCaveat":"हे Crop.health सेवेसाठी Kindwise ने प्रकाशित केलेले आकडे आहेत. ही FASALSATHI ची स्वतंत्र चाचणी नाही, टोमॅटो-विशिष्ट किंवा भारत-विशिष्ट मापदंड नाही आणि प्रत्येक फोटो योग्य ओळखला जाईल याची हमी नाही. FASALSATHI ने स्वतःची निदान अचूकता स्वतंत्रपणे मोजलेली नाही. प्रदाता प्रत्येक अंदाजासाठी स्वतंत्र सार्वत्रिक “प्रामाणिकता गुण” प्रकाशित करत नाही; हे केवळ मॉडेल बेंचमार्क आहेत. हवामान अंदाजासाठीही प्रत्येक स्थान व कालावधीसाठी एकच निश्चित अचूकता टक्केवारी नसते."});
+Object.assign(translations.en,{"scanCheckingLeaf":"Checking whether this image shows a plant leaf…","scanAnalyzingCrop":"Leaf check passed. Analyzing tomato health…","scanNotLeafTitle":"This photo does not show a leaf.","scanNotLeafHint":"We detected a different plant part or a non-plant image. Upload a close, clear photograph of a tomato leaf. Fruit, flowers, stems and objects are not accepted by this leaf scanner.","scanUncertainLeafTitle":"We couldn't confirm this is a leaf.","scanUncertainLeafHint":"Try again with one tomato leaf filling most of the frame, in natural light and in sharp focus.","scanLeafPassed":"Leaf pre-check passed ({score}% organ match). The disease result is assessed separately.","leafFilterSetup":"The leaf filter is not configured yet. Add the PLANTNET_API_KEY secret and deploy the backend workflow.","leafFilterQuota":"The free leaf-check daily quota has been reached. Try again after the quota resets.","leafFilterTimeout":"Leaf checking took too long. Check your connection and try again.","leafFilterUnavailable":"The leaf-check service is temporarily unavailable. No Crop.health analysis was run; please retry later."});
+Object.assign(translations.hi,{"scanCheckingLeaf":"जाँचा जा रहा है कि फोटो में पौधे की पत्ती है या नहीं…","scanAnalyzingCrop":"पत्ती की जाँच सफल। अब टमाटर के स्वास्थ्य का विश्लेषण हो रहा है…","scanNotLeafTitle":"यह फोटो पत्ती की नहीं लगती।","scanNotLeafHint":"फोटो में पौधे का कोई दूसरा भाग या गैर-पौधे की वस्तु मिली। टमाटर की पत्ती की पास से साफ फोटो अपलोड करें। फल, फूल, तना और अन्य वस्तुएँ इस स्कैनर में स्वीकार नहीं होंगी।","scanUncertainLeafTitle":"हम पुष्टि नहीं कर पाए कि यह पत्ती है।","scanUncertainLeafHint":"प्राकृतिक रोशनी में टमाटर की एक पत्ती की पास से साफ और स्पष्ट फोटो लें। पत्ती फ्रेम का अधिकांश हिस्सा भरनी चाहिए।","scanLeafPassed":"पत्ती की शुरुआती जाँच सफल ({score}% अंग मिलान)। रोग का परिणाम अलग से जाँचा जाता है।","leafFilterSetup":"पत्ती फ़िल्टर अभी सेट नहीं है। PLANTNET_API_KEY secret जोड़ें और backend workflow चलाएँ।","leafFilterQuota":"पत्ती जाँच की मुफ्त दैनिक सीमा पूरी हो गई है। सीमा रीसेट होने के बाद फिर प्रयास करें।","leafFilterTimeout":"पत्ती की जाँच में अधिक समय लगा। इंटरनेट जाँचकर फिर प्रयास करें।","leafFilterUnavailable":"पत्ती जाँच सेवा अभी उपलब्ध नहीं है। Crop.health विश्लेषण नहीं चलाया गया। बाद में फिर प्रयास करें।"});
+Object.assign(translations.mr,{"scanCheckingLeaf":"फोटोमध्ये पान आहे का हे तपासत आहोत…","scanAnalyzingCrop":"पानाची तपासणी यशस्वी. आता टोमॅटोच्या आरोग्याचे विश्लेषण सुरू आहे…","scanNotLeafTitle":"हा फोटो पानाचा नाही.","scanNotLeafHint":"फोटोमध्ये वनस्पतीचा दुसरा भाग किंवा वनस्पती नसलेली वस्तू आढळली. टोमॅटोच्या पानाचा जवळून स्पष्ट फोटो अपलोड करा. फळ, फूल, खोड आणि इतर वस्तू हा स्कॅनर स्वीकारत नाही.","scanUncertainLeafTitle":"हा फोटो पानाचा आहे याची खात्री करता आली नाही.","scanUncertainLeafHint":"नैसर्गिक प्रकाशात एका टोमॅटोच्या पानाचा जवळून, स्पष्ट आणि फोकसमधील फोटो घ्या. पानाने फ्रेमचा बहुतांश भाग व्यापावा.","scanLeafPassed":"पानाची प्राथमिक तपासणी यशस्वी ({score}% अवयव जुळणी). रोगाचा निकाल स्वतंत्रपणे तपासला जातो.","leafFilterSetup":"पान फिल्टर अजून सेट केलेले नाही. PLANTNET_API_KEY secret जोडा आणि backend workflow चालवा.","leafFilterQuota":"पान तपासणीची मोफत दैनिक मर्यादा पूर्ण झाली आहे. मर्यादा रीसेट झाल्यावर पुन्हा प्रयत्न करा.","leafFilterTimeout":"पान तपासणीस जास्त वेळ लागला. इंटरनेट तपासून पुन्हा प्रयत्न करा.","leafFilterUnavailable":"पान तपासणी सेवा सध्या उपलब्ध नाही. Crop.health विश्लेषण चालवलेले नाही. नंतर पुन्हा प्रयत्न करा."});
 loadSaved();applyLanguage();showScreen('language',true);
 if(!storageAvailable)setTimeout(()=>toast(t('storageUnavailable')),100);
 
