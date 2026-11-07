@@ -52,7 +52,7 @@ After adding all five secrets:
 
 The workflow type-checks all three TypeScript functions, links the Supabase project, applies database migrations, stores the Crop.health and Pl@ntNet keys as server-side Edge Function secrets, and deploys `leaf-filter`, `rapid-endpoint` and `disease-reports`.
 
-## 4. What the backend does
+## 5. What the backend does
 
 ### Crop scanner
 
