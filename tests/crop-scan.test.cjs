@@ -23,3 +23,13 @@ test('tomato-only cases A–D and threshold boundaries',()=>{
  assert.equal(scan.validateTomato(fixture('Potato',.65),'tomato',{nonTomatoConfidence:.7}).accepted,true);
  assert.equal(scan.validateTomato(fixture('Solanum lycopersicum',.9)).accepted,true);
 });
+
+test('leaf-part preflight accepts only a confidently classified leaf',()=>{
+ assert.deepEqual(scan.validateLeafPart({accepted:true,organ:'leaf',score:.91}),{accepted:true,organ:'leaf',score:.91});
+ assert.equal(scan.validateLeafPart({organ:'fruit',score:.94}).reason,'wrongPart');
+ assert.equal(scan.validateLeafPart({organ:'flower',score:.82}).reason,'wrongPart');
+ assert.equal(scan.validateLeafPart({organ:'not_plant',score:null}).reason,'wrongPart');
+ assert.equal(scan.validateLeafPart({organ:'leaf',score:.59}).reason,'uncertain');
+ assert.equal(scan.validateLeafPart({organ:'unknown',score:null}).reason,'uncertain');
+ assert.equal(scan.validateLeafPart({organ:'leaf',score:.6}).accepted,true);
+});
