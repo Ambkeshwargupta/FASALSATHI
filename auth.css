@@ -40,3 +40,25 @@
 .auth-single-method>span{font-size:21px;width:34px;height:34px;display:grid;place-items:center;background:#e8f1e6;border-radius:10px}
 .auth-single-method strong{display:block;font-size:15px}
 .auth-single-method small{display:block;color:#69766e;font-size:12px;margin-top:2px}
+
+/* Signup result dialog: success and duplicate-email feedback */
+.auth-result-dialog{
+  width:min(92vw,460px);max-width:460px;border:0;padding:0;
+  border-radius:20px;background:transparent;color:#1e3829;
+  box-shadow:0 24px 80px rgba(12,38,25,.28);
+}
+.auth-result-dialog::backdrop{background:rgba(10,28,19,.58);backdrop-filter:blur(3px)}
+.auth-result-card{padding:28px 26px 24px;border:1px solid #e0e9dc;border-radius:20px;background:#fff;text-align:center}
+.auth-result-icon{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 14px;border-radius:17px;font-size:27px;font-weight:900}
+.auth-result-icon.is-success{background:#e8f4df;color:#27633b}
+.auth-result-icon.is-error{background:#fff0ed;color:#a6382c}
+.auth-result-card h2{margin:0 0 10px;color:#1d3f2c;font-size:22px;line-height:1.2}
+.auth-result-card p{margin:0;color:#637267;font-size:14px;line-height:1.7;overflow-wrap:anywhere}
+.auth-result-ok{width:100%;min-height:48px;margin-top:22px;border:0;border-radius:12px;background:#1e5b3b;color:#fff;font-size:14px;font-weight:850;cursor:pointer}
+.auth-result-ok:hover{background:#17462e}
+.auth-result-ok:focus-visible{outline:3px solid #bad28c;outline-offset:3px}
+@media(max-width:520px){
+ .auth-result-card{padding:23px 18px 19px}
+ .auth-result-card h2{font-size:19px}
+ .auth-result-card p{font-size:13px}
+}
