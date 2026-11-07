@@ -35,7 +35,7 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Type-check both Edge Functions
+      - name: Type-check all three Edge Functions
         run: |
           deno check supabase/functions/rapid-endpoint/index.ts
           deno check supabase/functions/disease-reports/index.ts
