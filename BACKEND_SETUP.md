@@ -27,7 +27,7 @@ The key is used only by the `rapid-endpoint` Supabase Edge Function.
 3. The current free plan allows up to **500 identifications per day**, including commercial use within that daily limit; no credit card is required.
 4. Copy the key and keep it private.
 
-FASALSATHI sends a photo to Pl@ntNet first with automatic organ detection. Its `predictedOrgans` result identifies the photographed part (for example, leaf or fruit). FASALSATHI only proceeds to Crop.health when the part is classified as a leaf with a score of at least 0.60. This 0.60 is our application gate, not a published Pl@ntNet accuracy guarantee. See the [official organ-detection documentation](https://my.plantnet.org/doc/api/identify) and [free-plan conditions](https://my.plantnet.org/).
+FASALSATHI sends a photo to Pl@ntNet first with automatic organ detection. Its `predictedOrgans` result identifies the photographed part (for example, leaf or fruit). FASALSATHI proceeds to Crop.health when the part is classified as a leaf or as `scan` (Pl@ntNet's scan/scan-like leaf view) with a score of at least 0.60. This 0.60 is our application gate, not a published Pl@ntNet accuracy guarantee. See the [official organ-detection documentation](https://my.plantnet.org/doc/api/identify) and [free-plan conditions](https://my.plantnet.org/).
 
 ## 3. Create five GitHub Actions secrets
 
