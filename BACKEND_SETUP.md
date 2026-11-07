@@ -5,7 +5,8 @@ This is a separate backend for the `Ambkeshwargupta/FASALSATHI` repository. It d
 ## Already configured
 
 - New Supabase URL and browser publishable key are in `app-config.js`.
-- The Crop.health image proxy is in `supabase/functions/rapid-endpoint/index.ts`.
+- The free Pl@ntNet leaf-part preflight is in `supabase/functions/leaf-filter/index.ts`.
+- The Crop.health image proxy is in `supabase/functions/rapid-endpoint/index.ts` and requires an authenticated farmer session.
 - The nearby disease-report service is in `supabase/functions/disease-reports/index.ts`.
 - The private `disease_reports` schema is in `supabase/migrations/`.
 - Both functions and the migration can be deployed by the GitHub Actions workflow **Deploy FASALSATHI database and Edge Functions**.
@@ -13,36 +14,43 @@ This is a separate backend for the `Ambkeshwargupta/FASALSATHI` repository. It d
 ## 1. Create the Crop.health API key
 
 1. Open the [Kindwise admin panel](https://admin.kindwise.com/).
-2. Create an API key for the **Crop.health** product (not Plant.id or Plant.health).
-3. Allocate credits to the key. Check the balance and any usage limits before testing.
-4. Copy the API key once and keep it private.
+2. Create an API key for **Crop.health**.
+3. Add credits as required for Crop.health image assessments.
+4. Keep the key private; never paste it into browser code or a public repository.
 
-Kindwise documents the Crop.health identification API and its image-based crop/disease suggestions in its [Crop.health guide](https://www.kindwise.com/crop-health) and [example client](https://github.com/flowerchecker/crop-health-examples). The key is used only by the Supabase Edge Function, never by browser JavaScript.
+The key is used only by the `rapid-endpoint` Supabase Edge Function.
 
-## 2. Create three GitHub Actions secrets
+## 2. Create the free Pl@ntNet API key for leaf-part detection
 
-Open [FASALSATHI → Settings → Secrets and variables → Actions](https://github.com/Ambkeshwargupta/FASALSATHI/settings/secrets/actions), click **New repository secret**, and add these three secrets:
+1. Open the [Pl@ntNet API developer portal](https://my.plantnet.org/).
+2. Create one free API account and generate an API key.
+3. The current free plan allows up to **500 identifications per day**, including commercial use within that daily limit; no credit card is required.
+4. Copy the key and keep it private.
+
+FASALSATHI sends a photo to Pl@ntNet first with automatic organ detection. Its `predictedOrgans` result identifies the photographed part (for example, leaf or fruit). FASALSATHI only proceeds to Crop.health when the part is classified as a leaf with a score of at least 0.60. This 0.60 is our application gate, not a published Pl@ntNet accuracy guarantee. See the [official organ-detection documentation](https://my.plantnet.org/doc/api/identify) and [free-plan conditions](https://my.plantnet.org/).
+
+## 3. Create five GitHub Actions secrets
+
+Open [FASALSATHI → Settings → Secrets and variables → Actions](https://github.com/Ambkeshwargupta/FASALSATHI/settings/secrets/actions), click **New repository secret**, and add or update these five secrets:
 
 | Secret name | Value / where to get it |
 | --- | --- |
-| `SUPABASE_ACCESS_TOKEN` | Create a personal access token in [Supabase Account → Access Tokens](https://supabase.com/dashboard/account/tokens). |
-| `SUPABASE_DB_PASSWORD` | The database password you created with this Supabase project. If you no longer know it, reset it in Supabase Project Settings → Database. |
+| `SUPABASE_ACCESS_TOKEN` | Personal access token from [Supabase Account → Access Tokens](https://supabase.com/dashboard/account/tokens). |
+| `SUPABASE_DB_PASSWORD` | The database password for this Supabase project. |
+| `SUPABASE_DB_URL` | The project's IPv4-compatible session-pooler connection URI, with its password included. Keep it private. |
 | `CROP_HEALTH_API_KEY` | The Crop.health key created in Step 1. |
+| `PLANTNET_API_KEY` | The free API key created in Step 2. |
 
-Do **not** create a `SUPABASE_PUBLISHABLE_KEY` secret. Supabase injects the project's publishable key into its Edge Function runtime; the function validates the browser's `apikey` header against that managed value.
+## 4. Deploy database and functions
 
-Do not paste access tokens, database passwords, or the Crop.health key into chat, source files, or screenshots.
-
-## 3. Deploy database and functions
-
-After adding all three secrets:
+After adding all five secrets:
 
 1. Open the repository [Actions tab](https://github.com/Ambkeshwargupta/FASALSATHI/actions).
 2. Select **Deploy FASALSATHI database and Edge Functions**.
 3. Click **Run workflow** on branch `main`.
 4. Wait for the workflow to complete successfully.
 
-The workflow checks both TypeScript functions, links the Supabase project, applies the database migration, stores the Crop.health key as a server-side Edge Function secret, and deploys `rapid-endpoint` and `disease-reports`.
+The workflow type-checks all three TypeScript functions, links the Supabase project, applies database migrations, stores the Crop.health and Pl@ntNet keys as server-side Edge Function secrets, and deploys `leaf-filter`, `rapid-endpoint` and `disease-reports`.
 
 ## 4. What the backend does
 
@@ -50,19 +58,26 @@ The workflow checks both TypeScript functions, links the Supabase project, appli
 
 The browser sends a base64 crop image to `rapid-endpoint`. The function calls Crop.health server-to-server and returns the Crop.health result for the existing tomato validation and result UI. The provider key stays in Supabase secrets.
 
+### Leaf-only photo gate
+
+Before Crop.health is called, the browser sends the compressed photo to the authenticated `leaf-filter` Edge Function. That function verifies the Supabase farmer session, calls Pl@ntNet using `organs=auto`, and returns the predicted plant part and organ score. FASALSATHI blocks non-leaf and uncertain photos before consuming a Crop.health assessment. The preflight has its own Pl@ntNet free quota (currently 500 requests/day); if the quota or service is unavailable, FASALSATHI stops the scan rather than bypassing the filter.
+
+The `rapid-endpoint` also verifies a valid Supabase user session before calling Crop.health. Both provider keys remain in Supabase Edge Function secrets.
+
 ### Disease reports and nearby alerts
 
 The browser no longer reads or writes `disease_reports` directly. The `disease-reports` Edge Function uses the server-side Supabase key, and the SQL migration enables RLS while revoking direct table privileges from `anon` and `authenticated`. The function accepts validated image-scan reports and only returns reports within 5 km of the supplied saved field coordinates, from the previous five days.
 
 Reports include the saved field's coordinates and disease name so the app can calculate nearby activity. These are community-submitted, unconfirmed reports—not verified outbreaks. Because this prototype has no farmer login, the public report endpoint cannot prove a report's author; rate limits and validation reduce casual abuse but are not a substitute for authenticated accounts and durable abuse controls. Do not use the current nearby-report feature as an official disease-warning service.
 
-## 5. Test the new deployment
+## 6. Test the new deployment
 
 After a successful workflow run:
 
 - Open the live site: [FASALSATHI](https://ambkeshwargupta.github.io/FASALSATHI/).
-- Upload a clear, close-up tomato-leaf photo (not a poster, screenshot, or unrelated image).
-- Confirm the scanner returns a Crop.health assessment and that a confident non-tomato image is rejected.
+- Upload a clear, close-up tomato-leaf photo and confirm the leaf preflight passes before Crop.health is called.
+- Upload a tomato fruit, flower, unrelated object or non-plant photo and confirm it is rejected before Crop.health is called.
+- Confirm a valid tomato-leaf photo then receives a Crop.health assessment.
 - Save a valid assessment to a field, then open Alerts to test the nearby-report path.
 
 Use one or two test photos first; real Crop.health checks may consume credits.
@@ -71,8 +86,10 @@ Use one or two test photos first; real Crop.health checks may consume credits.
 
 - **`scanBackendSetup`**: check `app-config.js` is configured and the latest GitHub Pages deployment succeeded.
 - **HTTP 401 / invalid app key**: ensure the site uses the publishable key belonging to this exact Supabase project, then refresh the page.
-- **HTTP 503 / backend not configured**: add `CROP_HEALTH_API_KEY` as an Edge Function secret and rerun the backend workflow.
+- **Leaf filter not configured**: check `PLANTNET_API_KEY`, then rerun the backend workflow.
+- **Leaf filter quota reached**: the free Pl@ntNet quota is exhausted for the current UTC day; wait for reset.
+- **HTTP 503 / Crop.health backend not configured**: check `CROP_HEALTH_API_KEY` as an Edge Function secret and rerun the backend workflow.
 - **HTTP 502 from Crop.health**: check the Crop.health API key, credit balance, usage limits, and Supabase function logs.
-- **Workflow fails before deployment**: check the three GitHub repository secrets; the database password and Supabase access token are separate credentials.
+- **Workflow fails before deployment**: check all five GitHub repository secrets; the Supabase access token, database password and database URI are separate values.
 
 The Supabase database password, access token and Kindwise key remain private. Never commit them to GitHub.
