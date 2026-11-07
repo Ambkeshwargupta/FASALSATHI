@@ -132,13 +132,17 @@ Deno.serve(async (request) => {
     const organ = typeof predicted?.organ === "string" ? predicted.organ.toLowerCase() : "unknown";
     const score = typeof predicted?.score === "number" && Number.isFinite(predicted.score) &&
       predicted.score >= 0 && predicted.score <= 1 ? predicted.score : null;
-    const accepted = organ === "leaf" && score !== null && score >= LEAF_SCORE_THRESHOLD;
-    const reason = accepted ? "leaf_confirmed" : organ === "leaf" || organ === "unknown" ? "uncertain" : "wrong_part";
+    // The provider's "scan" class represents scanned/scan-like leaf imagery.
+    // Treat it as a leaf view; do not reject genuine leaf scans as a non-leaf.
+    const isLeafView = organ === "leaf" || organ === "scan";
+    const accepted = isLeafView && score !== null && score >= LEAF_SCORE_THRESHOLD;
+    const reason = accepted ? "leaf_confirmed" : isLeafView || organ === "unknown" ? "uncertain" : "wrong_part";
 
     return jsonResponse({
       success: true,
       accepted,
       organ,
+      normalizedOrgan: isLeafView ? "leaf" : organ,
       score,
       threshold: LEAF_SCORE_THRESHOLD,
       reason,
