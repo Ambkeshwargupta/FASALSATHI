@@ -52,6 +52,20 @@ After adding all five secrets:
 
 The workflow type-checks all three TypeScript functions, links the Supabase project, applies database migrations, stores the Crop.health and Pl@ntNet keys as server-side Edge Function secrets, and deploys `leaf-filter`, `rapid-endpoint` and `disease-reports`.
 
+### One-time Supabase Auth Hook activation (required for a definitive duplicate-email error)
+
+The migration creates a server-side **Before User Created** hook function. Activate it once in the Supabase dashboard:
+
+1. Open [Supabase Authentication → Hooks](https://supabase.com/dashboard/project/aaslgfnfdxhgoqwwpgnz/auth/hooks).
+2. Find **Before User Created** and enable it.
+3. Select **Postgres function** as the hook type.
+4. Choose `public.hook_prevent_duplicate_email_signup`.
+5. Save the hook configuration.
+
+The hook checks `auth.users` server-side before a new account is created. If the normalized email already exists, it rejects registration with HTTP 409 and an explicit duplicate-account message. The browser then displays the translated **Account already exists** dialog and the OK button takes the farmer to Sign in.
+
+This intentionally reveals whether an email address is registered. That is the requested user experience, but it weakens Supabase's default anti-enumeration privacy protection. Keep Auth rate limits enabled and consider CAPTCHA before opening registration to a large public audience.
+
 ## 5. What the backend does
 
 ### Crop scanner
@@ -68,7 +82,7 @@ The `rapid-endpoint` also verifies a valid Supabase user session before calling 
 
 The browser no longer reads or writes `disease_reports` directly. The `disease-reports` Edge Function uses the server-side Supabase key, and the SQL migration enables RLS while revoking direct table privileges from `anon` and `authenticated`. The function accepts validated image-scan reports and only returns reports within 5 km of the supplied saved field coordinates, from the previous five days.
 
-Reports include the saved field's coordinates and disease name so the app can calculate nearby activity. These are community-submitted, unconfirmed reports—not verified outbreaks. Because this prototype has no farmer login, the public report endpoint cannot prove a report's author; rate limits and validation reduce casual abuse but are not a substitute for authenticated accounts and durable abuse controls. Do not use the current nearby-report feature as an official disease-warning service.
+Reports include the saved field's coordinates and disease name so the app can calculate nearby activity. These are community-submitted, unconfirmed reports—not verified outbreaks. Nearby community reports remain unconfirmed and should not be treated as verified outbreaks. The report endpoint must continue to be hardened with authenticated farmer ownership checks and durable abuse controls before public production use.
 
 ## 6. Test the new deployment
 
